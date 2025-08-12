@@ -1,8 +1,13 @@
-// models/AdUser.js
 const mongoose = require('mongoose');
 
-const AdUserSchema = new mongoose.Schema({
-
+const ProfileSchema = new mongoose.Schema({
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+  },
   firstName: {
     type: String,
     default: '',
@@ -13,13 +18,8 @@ const AdUserSchema = new mongoose.Schema({
   },
   profileImage: {
     type: String,
-    default: '', // URL of profile picture
+    default: '',
   },
-  profilePic: { // agar aapka signup me yeh use ho raha hai toh bhi
-    type: String,
-  }
-}, {
-  timestamps: true, // createdAt and updatedAt
-});
+}, { timestamps: true });
 
-module.exports = mongoose.model('AdUser', AdUserSchema);
+module.exports = mongoose.model('Profile', ProfileSchema);
