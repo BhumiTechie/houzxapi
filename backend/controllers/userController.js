@@ -1,5 +1,6 @@
 const AdUser = require('../models/AdUser');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 // Signup
 exports.signup = async (req, res) => {
@@ -21,7 +22,11 @@ exports.signup = async (req, res) => {
     });
 
     await newUser.save();
-    res.status(201).json({ message: 'User registered successfully', user: newUser });
+
+    // JWT Token create karte hain signup ke baad bhi
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+    res.status(201).json({ message: 'User registered successfully', user: newUser, token });
 
   } catch (error) {
     console.error('Signup Error:', error);
@@ -44,7 +49,10 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    res.status(200).json({ message: 'Login successful', user });
+    // Token generate karo
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+    res.status(200).json({ message: 'Login successful', user, token });
 
   } catch (error) {
     console.error('Login Error:', error);

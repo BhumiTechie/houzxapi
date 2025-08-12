@@ -5,12 +5,12 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const { Server } = require('socket.io');
 const Message = require('./models/Message');
-const adRoutes = require('./routes/adsRoutes'); 
+const adRoutes = require('./routes/adsRoutes');
+const profileRoutes = require('./routes/profileRoute');
 
 const app = express();
 const server = http.createServer(app);
 
-// Socket setup
 const io = new Server(server, {
   cors: {
     origin: '*',
@@ -18,25 +18,20 @@ const io = new Server(server, {
   }
 });
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB Atlas connected'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-
-// Routes
 const messageRoutes = require('./routes/messages');
-const userRoutes = require('./routes/userRoutes'); // ✅ You added this
-app.use('/ads', adRoutes); // ✅ Correct
-
+const userRoutes = require('./routes/userRoutes');
+app.use('/ads', adRoutes);
 app.use('/messages', messageRoutes);
-app.use('/user', userRoutes); // ✅ This is required
+app.use('/user', userRoutes);
+app.use('/profile', profileRoutes);
 
-// Socket.IO events
 io.on('connection', (socket) => {
   console.log('✅ User connected:', socket.id);
 
@@ -64,4 +59,3 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
 });
-
