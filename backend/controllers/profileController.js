@@ -9,8 +9,8 @@ exports.getProfile = async (req, res) => {
     if (!profile) return res.status(404).json({ message: 'Profile not found' });
 
     res.json({ profile });
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
@@ -35,8 +35,8 @@ exports.updateProfile = async (req, res) => {
     await profile.save();
 
     res.json({ message: 'Profile updated successfully', profile });
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };

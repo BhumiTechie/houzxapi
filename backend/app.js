@@ -8,6 +8,7 @@ const authRoutes = require('./routes/authRoutes');
 const adRoutes = require('./routes/adsRoutes');
 const userRoutes = require('./routes/userRoutes');
 const profileRoutes = require('./routes/profileRoute');
+const postAdRoutes = require('./routes/postAdRoutes');
 
 const app = express();
 
@@ -17,7 +18,8 @@ app.use(bodyParser.json());
 app.use('/auth', authRoutes);
 app.use('/ads', adRoutes);
 app.use('/user', userRoutes);
-app.use('/profile', profileRoutes);
+app.use('/', profileRoutes);
+app.use('/postads', postAdRoutes);
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected'))

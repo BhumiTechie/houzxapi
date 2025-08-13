@@ -10,6 +10,8 @@ const adRoutes = require('./routes/adsRoutes');
 const profileRoutes = require('./routes/profileRoute');
 const messageRoutes = require('./routes/messages');
 const userRoutes = require('./routes/userRoutes');
+const postAdRoutes = require('./routes/postAdRoutes');
+
 
 const app = express();
 const server = http.createServer(app); // ✅ Socket.io ke liye HTTP server use
@@ -35,7 +37,9 @@ mongoose.connect(process.env.MONGO_URI)
 app.use('/ads', adRoutes);
 app.use('/messages', messageRoutes);
 app.use('/user', userRoutes);
-app.use('/profile', profileRoutes);
+app.use('/', profileRoutes);
+app.use('/postads', postAdRoutes);
+
 
 // ✅ Socket.io events
 io.on('connection', (socket) => {
