@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 
 router.post('/', async (req, res) => {
   try {
-    const data = req.body;
+    const data = req.body || {}; // fallback to empty object
 
     // Ensure userId exists and is valid
     if (!data.userId || !mongoose.Types.ObjectId.isValid(data.userId)) {
@@ -20,7 +20,9 @@ router.post('/', async (req, res) => {
 
     // Optional: handle nearestAirport if sent as array
     if (Array.isArray(data.nearestAirport)) {
-      data.nearestAirport = data.nearestAirport.map(a => `${a.name} - ${a.distance}`).join(', ');
+      data.nearestAirport = data.nearestAirport
+        .map(a => `${a.name} - ${a.distance}`)
+        .join(', ');
     }
 
     const postAd = new PostAd(data);
