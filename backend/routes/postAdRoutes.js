@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const PostAd = require('../models/postAd'); // path adjust kar lena
+const PostAd = require('../models/PostAd'); // path adjust kar lena
 
 
 router.post('/', async (req, res) => {
