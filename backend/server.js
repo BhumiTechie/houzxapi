@@ -11,6 +11,7 @@ const profileRoutes = require('./routes/profileRoute');
 const messageRoutes = require('./routes/messages');
 const userRoutes = require('./routes/userRoutes');
 const postAdRoutes = require('./routes/postAdRoutes');
+const housemateRoutes  = require('./routes/housemateRoutes')
 
 
 const app = express();
@@ -39,6 +40,7 @@ app.use('/messages', messageRoutes);
 app.use('/user', userRoutes);
 app.use('/', profileRoutes);
 app.use('/postads', postAdRoutes);
+app.use('/housemate-posts', housemateRoutes);
 
 
 // ✅ Socket.io events
