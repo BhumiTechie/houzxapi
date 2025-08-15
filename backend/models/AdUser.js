@@ -18,10 +18,6 @@ const adUserSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  profilePic: {
-    type: String,
-    default: ''
-  },
   createdAt: {
     type: Date,
     default: Date.now
