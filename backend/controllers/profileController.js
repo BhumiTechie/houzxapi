@@ -12,7 +12,7 @@ exports.getProfile = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
-  }
+  }  
 };
 
 exports.updateProfile = async (req, res) => {
