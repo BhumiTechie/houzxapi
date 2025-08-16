@@ -10,7 +10,7 @@ const userRoutes = require('./routes/userRoutes');
 const profileRoutes = require('./routes/profileRoute');
 const postAdRoutes = require('./routes/postAdRoutes');
 const housemateRoutes  = require('./routes/housemateRoutes')
-
+const propertyRoutes = require('./routes/propertySearch');
 const app = express();
 
 app.use(cors());
@@ -22,6 +22,7 @@ app.use('/user', userRoutes);
 app.use('/', profileRoutes);
 app.use('/postads', postAdRoutes);
 app.use('/housemate-posts', housemateRoutes);
+app.use('/properties', propertyRoutes);
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected'))
