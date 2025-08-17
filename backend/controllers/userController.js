@@ -1,5 +1,6 @@
 const AdUser = require('../models/AdUser');
 const bcrypt = require('bcryptjs');
+
 const jwt = require('jsonwebtoken');
 
 // Signup
