@@ -2,30 +2,31 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
 
+// Route imports
 const authRoutes = require('./routes/authRoutes');
 const adRoutes = require('./routes/adsRoutes');
 const userRoutes = require('./routes/userRoutes');
 const profileRoutes = require('./routes/profileRoute');
 const postAdRoutes = require('./routes/postAdRoutes');
-const housemateRoutes  = require('./routes/housemateRoutes')
+const housemateRoutes  = require('./routes/housemateRoutes');
 const propertyRoutes = require('./routes/propertySearch');
+const messageRoutes = require('./routes/messages');
+
 const app = express();
 
+// ✅ Middlewares
 app.use(cors());
 app.use(bodyParser.json());
 
+// ✅ API Routes
 app.use('/auth', authRoutes);
 app.use('/ads', adRoutes);
 app.use('/user', userRoutes);
-app.use('/', profileRoutes);
+app.use('/profile', profileRoutes);
 app.use('/postads', postAdRoutes);
 app.use('/housemate-posts', housemateRoutes);
 app.use('/properties', propertyRoutes);
-
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ MongoDB connected'))
-  .catch((err) => console.error('❌ MongoDB connection error:', err));
+app.use('/messages', messageRoutes);
 
 module.exports = app;

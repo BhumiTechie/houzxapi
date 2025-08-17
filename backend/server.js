@@ -1,18 +1,11 @@
 require('dotenv').config();
-const express = require('express');
 const http = require('http');
-const cors = require('cors');
 const mongoose = require('mongoose');
 const { Server } = require('socket.io');
 const Message = require('./models/Message');
+const app = require('./app');   // ✅ Import your Express app
 
-const adRoutes = require('./routes/adsRoutes');
-const profileRoutes = require('./routes/profileRoute');
-const messageRoutes = require('./routes/messages');
-const userRoutes = require('./routes/userRoutes');
-
-const app = express();
-const server = http.createServer(app); // ✅ Socket.io ke liye HTTP server use
+const server = http.createServer(app);
 
 // ✅ Socket.io setup
 const io = new Server(server, {
@@ -22,20 +15,10 @@ const io = new Server(server, {
   }
 });
 
-// ✅ Middlewares
-app.use(cors());
-app.use(express.json());
-
 // ✅ MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ MongoDB Atlas connected'))
+  .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
-
-// ✅ API Routes
-app.use('/ads', adRoutes);
-app.use('/messages', messageRoutes);
-app.use('/user', userRoutes);
-app.use('/profile', profileRoutes);
 
 // ✅ Socket.io events
 io.on('connection', (socket) => {
@@ -49,7 +32,6 @@ io.on('connection', (socket) => {
   socket.on('sendMessage', async (data) => {
     try {
       const { senderId, receiverId, text } = data;
-
       const message = new Message({ senderId, receiverId, text });
       await message.save();
 
@@ -65,10 +47,8 @@ io.on('connection', (socket) => {
   });
 });
 
-// ✅ PORT setup for Render
+// ✅ Start server
 const PORT = process.env.PORT || 5000;
-
-// ✅ Start server (Important: server.listen for Socket.io)
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
