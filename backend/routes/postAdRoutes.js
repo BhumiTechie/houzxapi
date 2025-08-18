@@ -1,24 +1,52 @@
 const express = require('express');
 const router = express.Router();
-const PostAd = require('../models/PostAd'); // path adjust kar lena
+const PostAd = require('../models/PostAd');
 const mongoose = require('mongoose');
 
+// 🔹 Get all posts
+router.get('/', async (req, res) => {
+  try {
+    const { city, minPrice, maxPrice } = req.query; // filters optional
+    let query = {};
 
+    if (city) query.city = city;
+    if (minPrice || maxPrice) {
+      query.rent = {};
+      if (minPrice) query.rent.$gte = Number(minPrice);
+      if (maxPrice) query.rent.$lte = Number(maxPrice);
+    }
+
+    const posts = await PostAd.find(query);
+    res.json(posts);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 🔹 Get single post by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const post = await PostAd.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+    res.json(post);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 🔹 Create new post
 router.post('/', async (req, res) => {
   try {
-    const data = req.body || {}; // fallback to empty object
+    const data = req.body || {};
 
-    // Ensure userId exists and is valid
     if (!data.userId || !mongoose.Types.ObjectId.isValid(data.userId)) {
       return res.status(400).json({ error: 'Valid userId is required' });
     }
 
-    // Optional: handle photos if sent as objects
     if (Array.isArray(data.photos)) {
       data.photos = data.photos.map(photo => (photo.uri ? photo.uri : photo));
     }
 
-    // Optional: handle nearestAirport if sent as array
     if (Array.isArray(data.nearestAirport)) {
       data.nearestAirport = data.nearestAirport
         .map(a => `${a.name} - ${a.distance}`)
