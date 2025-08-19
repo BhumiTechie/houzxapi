@@ -19,11 +19,15 @@ router.get('/search', async (req, res) => {
     } = req.query;
 
     const filters = {};
+// City filter (case-insensitive)
+if (city) {
+  filters.city = { $regex: city, $options: "i" };
+}
 
-    // City filter (case-insensitive)
-    if (city) {
-      filters.address = { $regex: city, $options: 'i' };
-    }
+// Location filter (case-insensitive)
+if (req.query.location) {
+  filters.location = { $regex: req.query.location, $options: "i" };
+}
 
     // Property type
     if (propertyType) {
