@@ -9,7 +9,9 @@ const RoomSchema = new mongoose.Schema({
 });
 
 const HousematePostSchema = new mongoose.Schema({
-  title: { type: String, required: true },
+city: { type: String, required: true },
+locationName: { type: String, required: true }, // e.g., "Andheri", "Rohini"
+
   description: { type: String },
   propertyType: { type: String, default: 'N/A' },
   address: { type: String, default: 'N/A' },

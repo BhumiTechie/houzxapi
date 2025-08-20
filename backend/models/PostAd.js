@@ -5,7 +5,9 @@ const PostAdSchema = new mongoose.Schema({
   address: { type: String, required: true },
   rent: { type: Number, required: true, set: val => Number(val) || 0 },
   deposit: { type: Number, default: 0, set: val => Number(val) || 0 },
-  availableFrom: { type: Date, required: false },
+  city: { type: String, required: true },
+  locationName: { type: String, required: true },
+  availableFrom: { type: Date },
   minStay: { type: String, default: '6 Months' },
   maxStay: { type: String, default: 'None' },
   propertyType: { type: String, required: true },
@@ -21,9 +23,7 @@ const PostAdSchema = new mongoose.Schema({
   area: { type: Number, required: true, set: val => Number(val) || 0 },
 
   photos: [{ type: String, set: val => (val.uri ? val.uri : val) }],
-
   floorPlan: { type: String },
-
   description: { type: String },
 
   amenities: {
@@ -43,14 +43,12 @@ const PostAdSchema = new mongoose.Schema({
   },
 
   additionalDetails: [{ type: String }],
-
   suitableFor: [{ type: String }],
 
   nearestAirport: { 
     type: String,
     set: val => Array.isArray(val) ? val.map(a => `${a.name} - ${a.distance}`).join(', ') : val
   },
-  nearestAirport: { type: String }, // could be name/distance or id ref
   nearestRailway: { type: String },
   nearestBus: { type: String },
   nearestHospital: { type: String },
@@ -58,7 +56,6 @@ const PostAdSchema = new mongoose.Schema({
   nearestSchool: { type: String },
 
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
- 
 }, { timestamps: true });
 
 module.exports = mongoose.model('PostAd', PostAdSchema);

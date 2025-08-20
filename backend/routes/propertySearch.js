@@ -10,6 +10,7 @@ router.get('/search', async (req, res) => {
   try {
     const {
       city,
+      location,      // location name / locality
       minRent,
       maxRent,
       propertyType,
@@ -19,30 +20,19 @@ router.get('/search', async (req, res) => {
     } = req.query;
 
     const filters = {};
-// City filter (case-insensitive)
-if (city) {
-  filters.city = { $regex: city, $options: "i" };
-}
 
-// Location filter (case-insensitive)
-if (req.query.location) {
-  filters.location = { $regex: req.query.location, $options: "i" };
-}
+    // City and Location filters (case-insensitive)
+    if (city) filters.city = { $regex: city, $options: 'i' };
+    if (location) filters.locationName = { $regex: location, $options: 'i' };
 
     // Property type
-    if (propertyType) {
-      filters.propertyType = propertyType;
-    }
+    if (propertyType) filters.propertyType = propertyType;
 
     // Number of rooms
-    if (rooms) {
-      filters.rooms = Number(rooms);
-    }
+    if (rooms) filters.rooms = Number(rooms);
 
     // Furnishing type
-    if (furnishType) {
-      filters.furnishType = furnishType;
-    }
+    if (furnishType) filters.furnishType = furnishType;
 
     // Rent filter
     const rentFilter = {};
@@ -52,18 +42,12 @@ if (req.query.location) {
     let results = [];
 
     if (rentalType === 'shared') {
-      if (Object.keys(rentFilter).length) {
-        filters['roomDetails.rent'] = rentFilter;
-      }
+      if (Object.keys(rentFilter).length) filters['roomDetails.rent'] = rentFilter;
       results = await HousematePost.find(filters).sort({ createdAt: -1 });
-    } 
-    else if (rentalType === 'whole') {
-      if (Object.keys(rentFilter).length) {
-        filters.rent = rentFilter;
-      }
+    } else if (rentalType === 'whole') {
+      if (Object.keys(rentFilter).length) filters.rent = rentFilter;
       results = await PostAd.find(filters).sort({ createdAt: -1 });
-    } 
-    else {
+    } else {
       // If no rentalType, fetch both shared and whole
       const shared = await HousematePost.find({
         ...filters,
