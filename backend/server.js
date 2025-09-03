@@ -2,53 +2,53 @@ require('dotenv').config();
 const http = require('http');
 const mongoose = require('mongoose');
 const { Server } = require('socket.io');
+const app = require('./app');
 const Message = require('./models/Message');
-const app = require('./app');   // ✅ Import your Express app
 
 const server = http.createServer(app);
 
-// ✅ Socket.io setup
+// Socket.IO setup
 const io = new Server(server, {
-  cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
-  }
+  cors: { origin: '*', methods: ['GET','POST'] }
 });
 
-// ✅ MongoDB connection
+// MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
-// ✅ Socket.io events
+let onlineUsers = {}; // userId -> Set of socketIds
+
 io.on('connection', (socket) => {
   console.log('✅ User connected:', socket.id);
 
   socket.on('joinRoom', (userId) => {
-    socket.join(userId);
-    console.log(`📥 User joined room: ${userId}`);
+    if (!onlineUsers[userId]) onlineUsers[userId] = new Set();
+    onlineUsers[userId].add(socket.id);
   });
 
-  socket.on('sendMessage', async (data) => {
-    try {
-      const { senderId, receiverId, text } = data;
-      const message = new Message({ senderId, receiverId, text });
-      await message.save();
+  socket.on('sendMessage', async ({ senderId, receiverId, text }) => {
+    const message = new Message({ senderId, receiverId, text });
+    await message.save();
 
-      io.to(receiverId).emit('receiveMessage', message);
-      io.to(senderId).emit('receiveMessage', message);
-    } catch (err) {
-      console.error('❌ Message save error:', err);
+    // Emit to all devices of receiver
+    if (onlineUsers[receiverId]) {
+      onlineUsers[receiverId].forEach(sid => io.to(sid).emit('receiveMessage', message));
+    }
+
+    // Emit to all devices of sender
+    if (onlineUsers[senderId]) {
+      onlineUsers[senderId].forEach(sid => io.to(sid).emit('receiveMessage', message));
     }
   });
 
   socket.on('disconnect', () => {
-    console.log('❌ User disconnected:', socket.id);
+    for (let id in onlineUsers) {
+      onlineUsers[id].delete(socket.id);
+      if (onlineUsers[id].size === 0) delete onlineUsers[id];
+    }
   });
 });
 
-// ✅ Start server
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

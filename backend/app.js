@@ -29,4 +29,5 @@ app.use('/housemate-posts', housemateRoutes);
 app.use('/properties', propertyRoutes);
 app.use('/messages', messageRoutes);
 
+
 module.exports = app;

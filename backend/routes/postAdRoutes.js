@@ -34,7 +34,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// 🔹 Create new post
 router.post('/', async (req, res) => {
   try {
     const data = req.body || {};
@@ -43,6 +42,11 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Valid userId is required' });
     }
 
+    if (!data.locationName || typeof data.locationName !== 'string') {
+      return res.status(400).json({ error: 'locationName is required' });
+    }
+
+    // handle photos & nearestAirport as before
     if (Array.isArray(data.photos)) {
       data.photos = data.photos.map(photo => (photo.uri ? photo.uri : photo));
     }
@@ -62,5 +66,6 @@ router.post('/', async (req, res) => {
     res.status(500).json({ error: 'Something went wrong', details: err.message });
   }
 });
+
 
 module.exports = router;
