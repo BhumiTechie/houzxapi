@@ -7,12 +7,10 @@ const Message = require('./models/Message');
 
 const server = http.createServer(app);
 
-// Socket.IO setup
 const io = new Server(server, {
   cors: { origin: '*', methods: ['GET','POST'] }
 });
 
-// MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
@@ -25,20 +23,41 @@ io.on('connection', (socket) => {
   socket.on('joinRoom', (userId) => {
     if (!onlineUsers[userId]) onlineUsers[userId] = new Set();
     onlineUsers[userId].add(socket.id);
+
+    // update all with online list
+    io.emit('onlineUsers', Object.keys(onlineUsers));
   });
 
-  socket.on('sendMessage', async ({ senderId, receiverId, text }) => {
-    const message = new Message({ senderId, receiverId, text });
-    await message.save();
+  // 📨 Send Message
+  socket.on('sendMessage', async (msg, ack) => {
+    try {
+      const message = new Message({
+        senderId: msg.senderId,
+        receiverId: msg.receiverId,
+        text: msg.text,
+        timestamp: new Date(),
+        delivered: false,
+      });
+      await message.save();
 
-    // Emit to all devices of receiver
-    if (onlineUsers[receiverId]) {
-      onlineUsers[receiverId].forEach(sid => io.to(sid).emit('receiveMessage', message));
-    }
+      // ack back to sender → "✓ sent"
+      if (ack) ack({ ...message.toObject(), delivered: false });
 
-    // Emit to all devices of sender
-    if (onlineUsers[senderId]) {
-      onlineUsers[senderId].forEach(sid => io.to(sid).emit('receiveMessage', message));
+      // send to receiver → on receive we mark delivered
+      if (onlineUsers[msg.receiverId]) {
+        onlineUsers[msg.receiverId].forEach((sid) =>
+          io.to(sid).emit('receiveMessage', { ...message.toObject(), delivered: true })
+        );
+      }
+
+      // also update sender with delivered true (after receiver got it)
+      if (onlineUsers[msg.senderId]) {
+        onlineUsers[msg.senderId].forEach((sid) =>
+          io.to(sid).emit('messageDelivered', { _id: message._id })
+        );
+      }
+    } catch (err) {
+      console.error('❌ Error saving message:', err);
     }
   });
 
@@ -47,6 +66,7 @@ io.on('connection', (socket) => {
       onlineUsers[id].delete(socket.id);
       if (onlineUsers[id].size === 0) delete onlineUsers[id];
     }
+    io.emit('onlineUsers', Object.keys(onlineUsers));
   });
 });
 

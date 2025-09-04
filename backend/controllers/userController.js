@@ -40,6 +40,7 @@ exports.signup = async (req, res) => {
 };
 
 // Login
+// Login
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -61,12 +62,24 @@ exports.login = async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    res.status(200).json({ message: 'Login successful', user, token });
+    // ✅ Clean user data (remove password, ensure profilePic always exists)
+    const userData = {
+      _id: user._id,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      profilePic: user.profilePic || `https://i.pravatar.cc/150?u=${user.email}`,
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email.split('@')[0]
+    };
+
+    res.status(200).json({ message: 'Login successful', user: userData, token });
 
   } catch (error) {
     console.error('Login Error:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
+
 
 
