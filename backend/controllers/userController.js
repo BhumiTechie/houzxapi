@@ -1,7 +1,8 @@
 const AdUser = require('../models/AdUser');
 const bcrypt = require('bcryptjs');
-
 const jwt = require('jsonwebtoken');
+const Profile = require('../models/profile');
+
 
 // Signup
 exports.signup = async (req, res) => {
@@ -39,8 +40,6 @@ exports.signup = async (req, res) => {
   }
 };
 
-// Login
-// Login
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -62,15 +61,18 @@ exports.login = async (req, res) => {
       { expiresIn: '1d' }
     );
 
-    // ✅ Clean user data (remove password, ensure profilePic always exists)
+    // ✅ Profile fetch karo
+    const profile = await Profile.findOne({ email: user.email });
+
+    // ✅ Clean + merged user data
     const userData = {
       _id: user._id,
       email: user.email,
       phoneNumber: user.phoneNumber,
-      profilePic: user.profilePic || `https://i.pravatar.cc/150?u=${user.email}`,
-      firstName: user.firstName || '',
-      lastName: user.lastName || '',
-      name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email.split('@')[0]
+      firstName: profile?.firstName || '',
+      lastName: profile?.lastName || '',
+      name: profile ? `${profile.firstName || ''} ${profile.lastName || ''}`.trim() : '',
+      profileImage: profile?.profileImage || user.profilePic || null,
     };
 
     res.status(200).json({ message: 'Login successful', user: userData, token });
