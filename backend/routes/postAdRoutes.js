@@ -2,7 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
 const PostAd = require("../models/PostAd");
-const Profile = require("../models/Profile"); 
+const Profile = require("../models/profile"); 
 const auth = require("../middleware/authMiddleware");
 
 // 🔹 Get all posts

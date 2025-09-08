@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const router = express.Router();
 const HousematePost = require('../models/HousematePost');
-const Profile = require('../models/Profile'); // 👈 yeh use hoga advertiser ke liye
+const Profile = require('../models/profile'); // 👈 yeh use hoga advertiser ke liye
 const auth = require('../middleware/authMiddleware');
 
 // 🔹 Get all posts
