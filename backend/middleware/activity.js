@@ -1,4 +1,4 @@
-const Profile = require('../models/Profile');
+const Profile = require('../models/profile');
 
 async function updateActivity(req, res, next) {
   try {
