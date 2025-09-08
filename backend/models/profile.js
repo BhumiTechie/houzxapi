@@ -8,18 +8,13 @@ const ProfileSchema = new mongoose.Schema({
     lowercase: true,
     trim: true,
   },
-  firstName: {
-    type: String,
-    default: '',
-  },
-  lastName: {
-    type: String,
-    default: '',
-  },
-  profileImage: {
-    type: String,
-    default: '',
-  },
+  firstName: { type: String, default: '' },
+  lastName: { type: String, default: '' },
+  profileImage: { type: String, default: '' },
+
+  lastActive: { type: Date, default: Date.now },
+  isOnline: { type: Boolean, default: false },
 }, { timestamps: true });
 
-module.exports = mongoose.model('Profile', ProfileSchema);
+// 👇 OverwriteModelError avoid karne ke liye yeh use karo
+module.exports = mongoose.models.Profile || mongoose.model('Profile', ProfileSchema);

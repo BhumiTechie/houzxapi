@@ -9,8 +9,8 @@ const RoomSchema = new mongoose.Schema({
 });
 
 const HousematePostSchema = new mongoose.Schema({
-city: { type: String, required: true },
-locationName: { type: String, required: true }, // e.g., "Andheri", "Rohini"
+  city: { type: String, required: true },
+  locationName: { type: String, required: true }, // e.g., "Andheri", "Rohini"
 
   description: { type: String },
   propertyType: { type: String, default: 'N/A' },
@@ -29,7 +29,9 @@ locationName: { type: String, required: true }, // e.g., "Andheri", "Rohini"
   floorPlan: { type: String }, // URL of floor plan image
   photos: [{ type: String }], // URLs of images
   additionalDetails: [{ type: String }], // e.g., Nearest Airport
-  postedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+
+  // 👇 yeh important hai
+  postedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Profile', required: true },
 }, { timestamps: true });
 
 module.exports = mongoose.model('HousematePost', HousematePostSchema);

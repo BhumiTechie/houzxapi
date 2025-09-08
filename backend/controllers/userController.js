@@ -25,20 +25,30 @@ exports.signup = async (req, res) => {
 
     await newUser.save();
 
-    // JWT Token with email
+    // ✅ Profile create karo signup ke saath
+    let profile = new Profile({
+      email,
+      firstName: "",
+      lastName: "",
+      profileImage: newUser.profilePic
+    });
+    await profile.save();
+
+    // ✅ Token me Profile._id bhejo (AdUser._id nahi)
     const token = jwt.sign(
-      { id: newUser._id, email: newUser.email },
+      { id: profile._id, email: profile.email },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
 
-    res.status(201).json({ message: 'User registered successfully', user: newUser, token });
+    res.status(201).json({ message: 'User registered successfully', user: profile, token });
 
   } catch (error) {
     console.error('Signup Error:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
+
 
 exports.login = async (req, res) => {
   try {
@@ -54,25 +64,36 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // JWT Token with email
+    // ✅ Profile fetch karo
+    let profile = await Profile.findOne({ email: user.email });
+
+    // Agar profile missing hai to create kar do
+    if (!profile) {
+      profile = new Profile({
+        email: user.email,
+        firstName: "",
+        lastName: "",
+        profileImage: user.profilePic
+      });
+      await profile.save();
+    }
+
+    // ✅ Token ab Profile._id ke saath
     const token = jwt.sign(
-      { id: user._id, email: user.email },
+      { id: profile._id, email: profile.email },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
 
-    // ✅ Profile fetch karo
-    const profile = await Profile.findOne({ email: user.email });
-
-    // ✅ Clean + merged user data
+    // ✅ Response me AdUser + Profile ka data bhejna
     const userData = {
-      _id: user._id,
+      _id: profile._id, // 👈 ab ye hi JWT id hoga
       email: user.email,
       phoneNumber: user.phoneNumber,
-      firstName: profile?.firstName || '',
-      lastName: profile?.lastName || '',
-      name: profile ? `${profile.firstName || ''} ${profile.lastName || ''}`.trim() : '',
-      profileImage: profile?.profileImage || user.profilePic || null,
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      name: `${profile.firstName || ''} ${profile.lastName || ''}`.trim(),
+      profileImage: profile.profileImage || user.profilePic,
     };
 
     res.status(200).json({ message: 'Login successful', user: userData, token });

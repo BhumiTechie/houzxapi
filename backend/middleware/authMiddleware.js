@@ -11,6 +11,7 @@ module.exports = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     console.log('Decoded JWT:', decoded);
+      req.userId = decoded.id; // ✅ yahan set karo
     req.user = { id: decoded.id, email: decoded.email };
     next();
   } catch (error) {
