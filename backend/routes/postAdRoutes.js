@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
-const PostAd = require("../models/PostAd");
+const PostAd = require('../models/PostAd');
 const Profile = require("../models/profile"); 
 const auth = require("../middleware/authMiddleware");
 

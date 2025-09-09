@@ -25,30 +25,20 @@ exports.signup = async (req, res) => {
 
     await newUser.save();
 
-    // ✅ Profile create karo signup ke saath
-    let profile = new Profile({
-      email,
-      firstName: "",
-      lastName: "",
-      profileImage: newUser.profilePic
-    });
-    await profile.save();
-
-    // ✅ Token me Profile._id bhejo (AdUser._id nahi)
+    // JWT Token with email
     const token = jwt.sign(
-      { id: profile._id, email: profile.email },
+      { id: newUser._id, email: newUser.email },
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
 
-    res.status(201).json({ message: 'User registered successfully', user: profile, token });
+    res.status(201).json({ message: 'User registered successfully', user: newUser, token });
 
   } catch (error) {
     console.error('Signup Error:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
-
 
 exports.login = async (req, res) => {
   try {
