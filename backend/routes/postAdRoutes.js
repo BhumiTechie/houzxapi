@@ -9,85 +9,6 @@ const auth = require("../middleware/authMiddleware");
 router.post("/", auth, async (req, res) => {
   try {
     const data = req.body || {};
-    if (!mongoose.Types.ObjectId.isValid(req.userId)) {
-      return res.status(400).json({ error: "Invalid userId in token" });
-    }
-
-    data.userId = new mongoose.Types.ObjectId(req.userId);
-    let postAd = new PostAd(data);
-    await postAd.save();
-
-    // Populate the userId field
-    postAd = await PostAd.findById(postAd._id).populate(
-      "userId",
-      "firstName lastName profileImage lastActive isOnline email"
-    );
-
-    // ✅ Convert to object and delete the redundant userId field
-    const postObject = postAd.toObject();
-    delete postObject.userId;
-
-    const advertiser = postAd.userId
-      ? {
-          _id: postAd.userId._id,
-          fullName:
-            `${postAd.userId.firstName || ""} ${postAd.userId.lastName || ""}`.trim() || postAd.userId.email,
-          profileImage:
-            postAd.userId.profileImage || "https://via.placeholder.com/150",
-          lastActive: postAd.userId.lastActive,
-          isOnline: postAd.userId.isOnline,
-        }
-      : null;
-
-    res.status(201).json({
-      message: "Post created successfully",
-      post: {
-        ...postObject, // Spreads the object without userId
-        advertiser,
-      },
-    });
-  } catch (err) {
-    console.error("Error creating post:", err);
-    res.status(500).json({ error: "Something went wrong", details: err.message });
-  }
-});
-
-// 🔹 Get single post
-router.get("/:id", async (req, res) => {
-  try {
-    const post = await PostAd.findById(req.params.id).populate(
-      "userId",
-      "firstName lastName profileImage lastActive isOnline email"
-    );
-
-    if (!post) return res.status(404).json({ message: "Post not found" });
-
-    const advertiser = post.userId
-      ? {
-          _id: post.userId._id,
-          fullName:
-            `${post.userId.firstName || ""} ${post.userId.lastName || ""}`.trim() ||
-            post.userId.email,
-          profileImage:
-            post.userId.profileImage || "https://via.placeholder.com/150",
-          lastActive: post.userId.lastActive,
-          isOnline: post.userId.isOnline,
-        }
-      : null;
-
-    res.json({
-      ...post.toObject(),
-      advertiser,
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// 🔹 Create post
-router.post("/", auth, async (req, res) => {
-  try {
-    const data = req.body || {};
 
     if (!mongoose.Types.ObjectId.isValid(req.userId)) {
       return res.status(400).json({ error: "Invalid userId in token" });
@@ -130,5 +51,40 @@ router.post("/", auth, async (req, res) => {
     res.status(500).json({ error: "Something went wrong", details: err.message });
   }
 });
+
+
+// 🔹 Get single post
+router.get("/:id", async (req, res) => {
+  try {
+    const post = await PostAd.findById(req.params.id).populate(
+      "userId",
+      "firstName lastName profileImage lastActive isOnline email"
+    );
+
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    const advertiser = post.userId
+      ? {
+          _id: post.userId._id,
+          fullName:
+            `${post.userId.firstName || ""} ${post.userId.lastName || ""}`.trim() ||
+            post.userId.email,
+          profileImage:
+            post.userId.profileImage || "https://via.placeholder.com/150",
+          lastActive: post.userId.lastActive,
+          isOnline: post.userId.isOnline,
+        }
+      : null;
+
+    res.json({
+      ...post.toObject(),
+      advertiser,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 
 module.exports = router;
