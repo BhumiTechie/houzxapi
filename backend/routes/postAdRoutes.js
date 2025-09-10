@@ -26,18 +26,19 @@ router.post("/", auth, async (req, res) => {
       "firstName lastName profileImage lastActive isOnline email"
     );
 
-    const advertiser = postAd.userId
-      ? {
-          _id: postAd.userId._id,
-          fullName:
-            `${postAd.userId.firstName || ""} ${postAd.userId.lastName || ""}`.trim() ||
-            postAd.userId.email,
-          profileImage:
-            postAd.userId.profileImage || "https://via.placeholder.com/150",
-          lastActive: postAd.userId.lastActive,
-          isOnline: postAd.userId.isOnline,
-        }
-      : null;
+const advertiser = postAd.userId
+  ? {
+      _id: postAd.userId._id,
+      fullName:
+        postAd.userId.fullName // अगर schema में fullName है
+        || `${postAd.userId.firstName || ""} ${postAd.userId.lastName || ""}`.trim()
+        || postAd.userId.email, // अगर नाम नहीं है तो email fallback
+      profileImage: postAd.userId.profileImage || "https://via.placeholder.com/150",
+      lastActive: postAd.userId.lastActive,
+      isOnline: postAd.userId.isOnline,
+    }
+  : null;
+
 
     res.status(201).json({
       message: "Post created successfully",
