@@ -57,16 +57,7 @@ exports.login = async (req, res) => {
     // ✅ Profile fetch karo
     let profile = await Profile.findOne({ email: user.email });
 
-    // Agar profile missing hai to create kar do
-    if (!profile) {
-      profile = new Profile({
-        email: user.email,
-        firstName: "",
-        lastName: "",
-        profileImage: user.profilePic
-      });
-      await profile.save();
-    }
+   if (!profile) { profile = new Profile({ email: user.email, firstName: "", lastName: "", profileImage: user.profilePic }); await profile.save(); }
 
     // ✅ Token ab Profile._id ke saath
     const token = jwt.sign(
