@@ -13,6 +13,7 @@ const postAdRoutes = require('./routes/postAdRoutes');
 const housemateRoutes  = require('./routes/housemateRoutes');
 const propertyRoutes = require('./routes/propertySearch');
 const messageRoutes = require('./routes/messages');
+const BuyRoutes = require('./routes/buy');
 
 const app = express();
 
@@ -30,6 +31,8 @@ app.use('/postads', postAdRoutes);
 app.use('/housemate-posts', housemateRoutes);
 app.use('/properties', propertyRoutes);
 app.use('/messages', messageRoutes);
+app.use('/buy', BuyRoutes);
+
 
 
 module.exports = app;
