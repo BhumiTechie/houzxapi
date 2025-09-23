@@ -23,14 +23,18 @@ const BuySchema = new mongoose.Schema({
 
   additionalDetails: [String],
 
+// ✅ new: reference to User collection
+ userId: { type: mongoose.Schema.Types.ObjectId,  ref: 'Profile', required: true },
+
   advertiser: {
     fullName: String,
     profileImage: String,
     lastActive: Date,
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+    isOnline: Boolean
   },
 
   createdAt: { type: Date, default: Date.now }
 });
+
 
 module.exports = mongoose.model('Buy', BuySchema);
