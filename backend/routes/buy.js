@@ -100,38 +100,68 @@ router.post("/", auth, async (req, res) => {
   }
 });
 
-
-// 🔹 Get all posts
+// 🔹 GET /buy — filter with city/locality (case-insensitive), budgets & types
 router.get("/", async (req, res) => {
   try {
-    const posts = await Buy.find() 
+    const { city, location, minBudget, maxBudget, propertyTypes, furnishTypes } = req.query;
+
+    const filter = {};
+
+    // ✅ City & Locality : case-insensitive + trim
+    if (city) filter.city = { $regex: `^${city.trim()}$`, $options: "i" };
+// naya:
+if (location)
+  filter.locality = { $regex: `^${location.trim()}\\s*$`, $options: 'i' };
+
+    // ✅ Budget range
+    if (minBudget || maxBudget) filter.propertyPrice = {};
+    if (minBudget) filter.propertyPrice.$gte = Number(minBudget);
+    if (maxBudget) filter.propertyPrice.$lte = Number(maxBudget);
+
+    // ✅ Property types (comma separated, trim & case-insensitive exact match)
+    if (propertyTypes) {
+      const types = propertyTypes.split(",").map(t => t.trim());
+      filter.propertyType = { $in: types };
+    }
+
+    // ✅ Furnish types (comma separated, trim)
+    if (furnishTypes) {
+      const types = furnishTypes.split(",").map(t => t.trim());
+      filter.furnishType = { $in: types };
+    }
+
+    console.log("✅ Current filter:", filter); // Debugging
+
+    const posts = await Buy.find(filter)
       .populate("userId", "firstName lastName profileImage lastActive isOnline email")
       .sort({ createdAt: -1 });
 
-    const formatted = posts.map((post) => {
+    const formatted = posts.map(post => {
       const advertiser = post.userId
         ? {
             _id: post.userId._id,
-            fullName:
-              `${post.userId.firstName || ""} ${post.userId.lastName || ""}`.trim() ||
-              post.userId.email,
+            fullName: `${post.userId.firstName || ""} ${post.userId.lastName || ""}`.trim() || post.userId.email,
             profileImage: post.userId.profileImage || "https://via.placeholder.com/150",
             lastActive: post.userId.lastActive,
-            isOnline: post.userId.isOnline,
+            isOnline: post.userId.isOnline
           }
         : null;
 
       return {
         ...post.toObject(),
-        advertiser,
+        advertiser
       };
     });
 
     res.json(formatted);
   } catch (err) {
+    console.error("❌ Buy route error:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
+
+
 
 // 🔹 Get only my posts (logged-in user)
 router.get("/my-posts", auth, async (req, res) => {

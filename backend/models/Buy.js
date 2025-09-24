@@ -29,7 +29,7 @@ const BuySchema = new mongoose.Schema({
   advertiser: {
     fullName: String,
     profileImage: String,
-    lastActive: Date,
+    lastActive: Date, 
     isOnline: Boolean
   },
 
