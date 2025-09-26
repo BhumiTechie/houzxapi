@@ -14,6 +14,7 @@ const housemateRoutes  = require('./routes/housemateRoutes');
 const propertyRoutes = require('./routes/propertySearch');
 const messageRoutes = require('./routes/messages');
 const BuyRoutes = require('./routes/buy');
+const tenantRoutes = require('./routes/tenant');
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use('/housemate-posts', housemateRoutes);
 app.use('/properties', propertyRoutes);
 app.use('/messages', messageRoutes);
 app.use('/buy', BuyRoutes);
+app.use('/tenant', tenantRoutes); 
 
 
 

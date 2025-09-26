@@ -63,6 +63,7 @@ router.post("/", auth, async (req, res) => {
 
     // ✅ link post with Profile._id
     data.userId = new mongoose.Types.ObjectId(req.userId);
+    
 
     // ✅ instance ka naam change
     const newProperty = new Buy(data);
@@ -99,66 +100,71 @@ router.post("/", auth, async (req, res) => {
     res.status(500).json({ error: "Something went wrong", details: err.message });
   }
 });
-
-// 🔹 GET /buy — filter with city/locality (case-insensitive), budgets & types
 router.get("/", async (req, res) => {
   try {
     const { city, location, minBudget, maxBudget, propertyTypes, furnishTypes } = req.query;
-
     const filter = {};
 
-    // ✅ City & Locality : case-insensitive + trim
-    if (city) filter.city = { $regex: `^${city.trim()}$`, $options: "i" };
-// naya:
-if (location)
-  filter.locality = { $regex: `^${location.trim()}\\s*$`, $options: 'i' };
+    // 🔹 City filter (case-insensitive)
+    if (city) filter.city = { $regex: city.trim(), $options: "i" };
 
-    // ✅ Budget range
+    // 🔹 Location / Locality filter (case-insensitive)
+    if (location) filter.locality = { $regex: location.trim(), $options: "i" };
+
+    // 🔹 Budget filter
     if (minBudget || maxBudget) filter.propertyPrice = {};
     if (minBudget) filter.propertyPrice.$gte = Number(minBudget);
     if (maxBudget) filter.propertyPrice.$lte = Number(maxBudget);
 
-    // ✅ Property types (comma separated, trim & case-insensitive exact match)
+    // 🔹 Property Types filter (case-insensitive)
     if (propertyTypes) {
-      const types = propertyTypes.split(",").map(t => t.trim());
-      filter.propertyType = { $in: types };
+      filter.propertyType = {
+        $in: propertyTypes.split(',').map(t => new RegExp(`^${t.trim()}$`, 'i'))
+      };
     }
 
-    // ✅ Furnish types (comma separated, trim)
+    // 🔹 Furnish Types filter (case-insensitive)
     if (furnishTypes) {
-      const types = furnishTypes.split(",").map(t => t.trim());
-      filter.furnishType = { $in: types };
+      filter.furnishType = {
+        $in: furnishTypes.split(',').map(t => new RegExp(`^${t.trim()}$`, 'i'))
+      };
     }
 
-    console.log("✅ Current filter:", filter); // Debugging
+    console.log('🔹 Filter sent to DB:', JSON.stringify(filter));
 
     const posts = await Buy.find(filter)
-      .populate("userId", "firstName lastName profileImage lastActive isOnline email")
+      .populate("userId", "firstName lastName lastActive isOnline profileImage email")
       .sort({ createdAt: -1 });
 
-    const formatted = posts.map(post => {
+    // 🔹 Add advertiser info like POST route
+    const formattedPosts = posts.map(post => {
       const advertiser = post.userId
         ? {
             _id: post.userId._id,
             fullName: `${post.userId.firstName || ""} ${post.userId.lastName || ""}`.trim() || post.userId.email,
             profileImage: post.userId.profileImage || "https://via.placeholder.com/150",
             lastActive: post.userId.lastActive,
-            isOnline: post.userId.isOnline
+            isOnline: post.userId.isOnline,
           }
         : null;
 
       return {
         ...post.toObject(),
-        advertiser
+        advertiser,
       };
     });
 
-    res.json(formatted);
+    res.json(formattedPosts);
   } catch (err) {
-    console.error("❌ Buy route error:", err);
+    console.error('❌ Error in /buy GET:', err);
     res.status(500).json({ error: err.message });
   }
 });
+
+
+
+
+
 
 
 

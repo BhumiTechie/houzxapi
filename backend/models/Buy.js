@@ -26,7 +26,7 @@ const BuySchema = new mongoose.Schema({
 // ✅ new: reference to User collection
  userId: { type: mongoose.Schema.Types.ObjectId,  ref: 'Profile', required: true },
 
-  advertiser: {
+  advertiser: { 
     fullName: String,
     profileImage: String,
     lastActive: Date, 
