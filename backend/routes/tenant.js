@@ -16,11 +16,19 @@ router.get('/getproperties', async (req, res) => {
 
     let results = [];
     let query = {};
+// Common filters
+if (city) {
+  query.city = { $regex: `^${city.trim()}$`, $options: 'i' };
+}
 
-    // Common filters
-    if(city) query.city = city;
-    if(location) query.locationName = { $regex: location, $options: 'i' };
-    if(propertyType) query.propertyType = propertyType;
+if (location) {
+  query.locationName = { $regex: location.trim(), $options: 'i' };
+}
+
+if (propertyType) {
+  const types = propertyType.split(',').map(t => t.trim());
+  query.propertyType = { $in: types };
+}
 
     // ----------- WHOLE PROPERTIES -----------
     if(usageType === 'Whole') {
