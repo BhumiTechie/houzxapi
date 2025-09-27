@@ -17,8 +17,10 @@ router.get('/getproperties', async (req, res) => {
     let results = [];
     let query = {};
 // Common filters
+// ✅ Common filters (case-insensitive + trim)
 if (city) {
-  query.city = { $regex: `^${city.trim()}$`, $options: 'i' };
+  // remove ^$ so that trailing space in DB (e.g. "Pune ") bhi match ho
+  query.city = { $regex: city.trim(), $options: 'i' };
 }
 
 if (location) {
@@ -27,8 +29,10 @@ if (location) {
 
 if (propertyType) {
   const types = propertyType.split(',').map(t => t.trim());
-  query.propertyType = { $in: types };
+  // Case-insensitive regex for each property type
+  query.propertyType = { $in: types.map(t => new RegExp(`^${t}$`, 'i')) };
 }
+
 
     // ----------- WHOLE PROPERTIES -----------
     if(usageType === 'Whole') {
