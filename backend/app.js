@@ -15,6 +15,7 @@ const propertyRoutes = require('./routes/propertySearch');
 const messageRoutes = require('./routes/messages');
 const BuyRoutes = require('./routes/buy');
 const tenantRoutes = require('./routes/tenant');
+const uploadRoutes = require('./routes/upload');
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use('/properties', propertyRoutes);
 app.use('/messages', messageRoutes);
 app.use('/buy', BuyRoutes);
 app.use('/tenant', tenantRoutes); 
+app.use('/upload', uploadRoutes);
 
 
 
