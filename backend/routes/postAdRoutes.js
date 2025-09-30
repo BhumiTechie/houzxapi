@@ -1,21 +1,37 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const multer = require("multer");
+const path = require("path");
 const router = express.Router();
 const PostAd = require("../models/PostAd");
 const Profile = require("../models/profile");
 const auth = require("../middleware/authMiddleware");
 
-// 🔹 Create post
-router.post("/", auth, async (req, res) => {
-  try {
-    const data = req.body || {};
+// 🔹 Multer Storage Config
+const storage = multer.diskStorage({
+  destination: path.join(__dirname, "../uploads"), // ✅ uploads folder
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+const upload = multer({ storage });
 
+/**
+ * =========================================
+ *   CREATE POST  (with photos upload)
+ * =========================================
+ */
+router.post("/", auth, upload.array("photos", 5), async (req, res) => {
+  try {
     if (!mongoose.Types.ObjectId.isValid(req.userId)) {
       return res.status(400).json({ error: "Invalid userId in token" });
     }
 
-    // ✅ Always link post with Profile._id
+    const data = req.body || {};
     data.userId = new mongoose.Types.ObjectId(req.userId);
+
+    // ✅ Save uploaded photo URLs
+    data.photos = (req.files || []).map((file) => `/uploads/${file.filename}`);
 
     let postAd = new PostAd(data);
     await postAd.save();
@@ -51,7 +67,11 @@ router.post("/", auth, async (req, res) => {
   }
 });
 
-// 🔹 Get all posts
+/**
+ * =========================================
+ *   GET ALL POSTS
+ * =========================================
+ */
 router.get("/", async (req, res) => {
   try {
     const posts = await PostAd.find()
@@ -83,7 +103,11 @@ router.get("/", async (req, res) => {
   }
 });
 
-// 🔹 Get only my posts (logged-in user)
+/**
+ * =========================================
+ *   GET ONLY MY POSTS
+ * =========================================
+ */
 router.get("/my-posts", auth, async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.userId)) {
@@ -119,12 +143,16 @@ router.get("/my-posts", auth, async (req, res) => {
   }
 });
 
-// 🔹 Delete my post
+/**
+ * =========================================
+ *   DELETE MY POST
+ * =========================================
+ */
 router.delete("/my-posts/:id", auth, async (req, res) => {
   try {
     const post = await PostAd.findOneAndDelete({
       _id: req.params.id,
-      userId: req.userId, // ✅ सिर्फ अपनी ही ad delete कर पाएगा
+      userId: req.userId,
     });
 
     if (!post) {
@@ -137,7 +165,11 @@ router.delete("/my-posts/:id", auth, async (req, res) => {
   }
 });
 
-// 🔹 Get single post
+/**
+ * =========================================
+ *   GET SINGLE POST
+ * =========================================
+ */
 router.get("/:id", async (req, res) => {
   try {
     const post = await PostAd.findById(req.params.id).populate(

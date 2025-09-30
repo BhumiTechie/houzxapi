@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const updateActivity = require('./middleware/activity');
+const path = require("path");
 
 // Route imports
 const authRoutes = require('./routes/authRoutes');
@@ -36,7 +37,7 @@ app.use('/messages', messageRoutes);
 app.use('/buy', BuyRoutes);
 app.use('/tenant', tenantRoutes); 
 app.use('/upload', uploadRoutes);
-
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 
 module.exports = app;
