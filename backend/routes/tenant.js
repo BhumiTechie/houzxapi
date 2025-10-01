@@ -122,5 +122,36 @@ if (propertyType) {
     res.status(500).json({ error: err.message });
   }
 });
+// GET /tenant/getproperty/:id
+router.get('/getproperty/:id', async (req, res) => {
+  try {
+    const { id } = req.params;  // clicked property ka _id
+    const { usageType } = req.query; // Whole, Shared, Buy
+
+    if(!usageType) {
+      return res.status(400).json({ error: "usageType is required" });
+    }
+
+    let property;
+
+    if(usageType === 'Whole') {
+      property = await PostAd.findById(id)
+        .populate('userId', 'firstName lastName profileImage email isOnline lastActive');
+    } else if(usageType === 'Shared') {
+      property = await HousemateAd.findById(id)
+        .populate('postedBy', 'firstName lastName profileImage email isOnline lastActive');
+    } else if(usageType === 'Buy') {
+      property = await BuyAd.findById(id)
+        .populate('userId', 'firstName lastName profileImage email isOnline lastActive');
+    }
+
+    if(!property) return res.status(404).json({ error: "Property not found" });
+
+    res.json({ property });
+  } catch(err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;
