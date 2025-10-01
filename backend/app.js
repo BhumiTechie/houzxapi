@@ -36,7 +36,7 @@ app.use('/properties', propertyRoutes);
 app.use('/messages', messageRoutes);
 app.use('/buy', BuyRoutes);
 app.use('/tenant', tenantRoutes); 
-app.use('/upload', uploadRoutes);
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 
