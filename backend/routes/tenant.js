@@ -77,16 +77,21 @@ router.get('/getproperties', async (req, res) => {
     }
 
     // Buy
-    else if (usageType === 'buy') {
-      let buyQuery = {};
-      if(city) buyQuery.city = city;
-      if(location) buyQuery.locality = { $regex: location, $options: 'i' };
-      if(propertyType) buyQuery.propertyType = propertyType;
-      if(minBudget || maxBudget) {
-        buyQuery.propertyPrice = {};
-        if(minBudget) buyQuery.propertyPrice.$gte = parseInt(minBudget);
-        if(maxBudget) buyQuery.propertyPrice.$lte = parseInt(maxBudget);
-      }
+   else if (usageType === 'buy') {
+  let buyQuery = {};
+  if(city) buyQuery.city = { $regex: city.trim(), $options: 'i' };
+  if(location) buyQuery.locality = { $regex: location.trim(), $options: 'i' };
+  if(propertyType) {
+    const types = propertyType.split(',').map(t => t.trim());
+    buyQuery.propertyType = { $in: types.map(t => new RegExp(`^${t}$`, 'i')) };
+  }
+  if(minBudget || maxBudget) {
+    buyQuery.propertyPrice = {};
+    if(minBudget) buyQuery.propertyPrice.$gte = parseInt(minBudget);
+    if(maxBudget) buyQuery.propertyPrice.$lte = parseInt(maxBudget);
+  }
+}
+
 
       const buy = await BuyAd.find(buyQuery)
         .populate('userId', 'firstName lastName profileImage email isOnline lastActive')
