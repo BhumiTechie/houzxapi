@@ -40,4 +40,5 @@ app.use('/tenant', tenantRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 
+
 module.exports = app;

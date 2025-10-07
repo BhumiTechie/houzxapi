@@ -4,6 +4,7 @@ const router = express.Router();
 const HousematePost = require('../models/HousematePost');
 const Profile = require('../models/profile'); // advertiser ke liye
 const auth = require('../middleware/authMiddleware');
+const upload = require('../middleware/uploadMiddleware');
 
 // 🔹 Helper function: advertiser format
 const formatAdvertiser = (user) =>
@@ -59,12 +60,14 @@ router.get('/:id', async (req, res) => {
 });
 
 // 🔹 Create a new post
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, upload.array("photos", 12), async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.userId)) {
       return res.status(400).json({ success: false, error: 'Invalid userId in token' });
     }
-
+    // Uploaded images
+    const uploadedFiles = (req.files || []).map(file => `/uploads/${file.filename}`);
+    req.body.photos = uploadedFiles;
     const userObjectId = new mongoose.Types.ObjectId(req.userId);
 
     const profileExists = await Profile.findById(userObjectId);

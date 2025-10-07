@@ -52,11 +52,15 @@ const router = express.Router();
 const Buy = require("../models/Buy");
 const Profile = require("../models/profile");
 const auth = require("../middleware/authMiddleware");
+const upload = require("../middleware/uploadMiddleware");
 
-router.post("/", auth, async (req, res) => {
+router.post("/", auth, upload.array("photos", 12), async (req, res) => {
   try {
     const data = req.body || {};
-
+  // Uploaded images
+ // multer se upload hone wali files
+    const uploadedFiles = (req.files || []).map(file => `/uploads/${file.filename}`);
+    data.photos = uploadedFiles;
     if (!mongoose.Types.ObjectId.isValid(req.userId)) {
       return res.status(400).json({ error: "Invalid userId in token" });
     }

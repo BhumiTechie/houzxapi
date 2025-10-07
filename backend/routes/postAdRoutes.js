@@ -5,15 +5,10 @@ const path = require("path");
 const router = express.Router();
 const PostAd = require("../models/PostAd");
 const auth = require("../middleware/authMiddleware");
+const upload= require("../middleware/uploadMiddleware");
 
-// 🔹 Multer Storage Config
-const storage = multer.diskStorage({
-  destination: path.join(__dirname, "../uploads"),
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
-const upload = multer({ storage });
+
+
 
 // =========================================
 // CREATE POST (with up to 12 photos)
@@ -26,6 +21,7 @@ router.post("/", auth, upload.array("photos", 12), async (req, res) => {
 
     const data = req.body || {};
     data.userId = new mongoose.Types.ObjectId(req.userId);
+    
 
     // ✅ Handle uploaded files AND direct URL array
     const uploadedFiles = (req.files || []).map(file => `/uploads/${file.filename}`);
