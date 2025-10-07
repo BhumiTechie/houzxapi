@@ -77,8 +77,10 @@ router.get('/getproperties', async (req, res) => {
     }
 
     // Buy
-   else if (usageType === 'buy') {
+    // Buy
+else if (usageType === 'buy') {
   let buyQuery = {};
+  
   if(city) buyQuery.city = { $regex: city.trim(), $options: 'i' };
   if(location) buyQuery.locality = { $regex: location.trim(), $options: 'i' };
   if(propertyType) {
@@ -90,26 +92,25 @@ router.get('/getproperties', async (req, res) => {
     if(minBudget) buyQuery.propertyPrice.$gte = parseInt(minBudget);
     if(maxBudget) buyQuery.propertyPrice.$lte = parseInt(maxBudget);
   }
+
+  const buy = await BuyAd.find(buyQuery)
+    .populate('userId', 'firstName lastName profileImage email isOnline lastActive')
+    .sort({ createdAt: -1 });
+
+  results = buy.map(post => ({
+    ...post.toObject(),
+    usageType: 'Buy',
+    advertiser: post.userId ? {
+      _id: post.userId._id,
+      fullName: `${post.userId.firstName || ''} ${post.userId.lastName || ''}`.trim() || post.userId.email,
+      profileImage: post.userId.profileImage || 'https://via.placeholder.com/150',
+      email: post.userId.email,
+      isOnline: post.userId.isOnline,
+      lastActive: post.userId.lastActive
+    } : null
+  }));
 }
-
-
-      const buy = await BuyAd.find(buyQuery)
-        .populate('userId', 'firstName lastName profileImage email isOnline lastActive')
-        .sort({ createdAt: -1 });
-
-      results = buy.map(post => ({
-        ...post.toObject(),
-        usageType: 'Buy',
-        advertiser: post.userId ? {
-          _id: post.userId._id,
-          fullName: `${post.userId.firstName || ''} ${post.userId.lastName || ''}`.trim() || post.userId.email,
-          profileImage: post.userId.profileImage || 'https://via.placeholder.com/150',
-          email: post.userId.email,
-          isOnline: post.userId.isOnline,
-          lastActive: post.userId.lastActive
-        } : null
-      }));
-    } else {
+else {
       return res.status(400).json({ error: "Invalid usageType. Must be Whole, Shared, or Buy" });
     }
 
