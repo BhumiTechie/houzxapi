@@ -1,3 +1,5 @@
+console.log("JWT_SECRET:", process.env.JWT_SECRET);
+console.log("JWT_REFRESH_SECRET:", process.env.JWT_REFRESH_SECRET);
 const AdUser = require('../models/AdUser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -16,18 +18,37 @@ exports.signup = async (req, res) => {
   try {
     const { email, phoneNumber, password } = req.body;
 
+    // 1️⃣ Check if user already exists
     const existingUser = await AdUser.findOne({ $or: [{ email }, { phoneNumber }] });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    // 2️⃣ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 3️⃣ Create new user
     const newUser = new AdUser({ email, phoneNumber, password: hashedPassword });
-    await newUser.save();
 
-    const accessToken = generateAccessToken({ id: newUser._id, email });
-    const refreshToken = generateRefreshToken({ id: newUser._id, email });
+    try {
+      await newUser.save();
+      console.log('User saved:', newUser._id);
+    } catch (dbError) {
+      console.error('Database save error:', dbError);
+      return res.status(500).json({ message: 'Error saving user to database' });
+    }
 
+    // 4️⃣ Generate tokens safely
+    let accessToken, refreshToken;
+    try {
+      accessToken = generateAccessToken({ id: newUser._id, email });
+      refreshToken = generateRefreshToken({ id: newUser._id, email });
+    } catch (tokenError) {
+      console.error('JWT generation error:', tokenError);
+      return res.status(500).json({ message: 'Token generation failed' });
+    }
+
+    // 5️⃣ Return success
     res.status(201).json({
       message: 'User registered successfully',
       user: newUser,
