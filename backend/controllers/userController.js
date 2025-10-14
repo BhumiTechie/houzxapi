@@ -19,18 +19,25 @@ const generateRefreshToken = (payload) => {
 // 🟢 SIGNUP
 exports.signup = async (req, res) => {
   try {
-    const { email, phoneNumber, password } = req.body;
+    let { email, phoneNumber, password } = req.body;
 
-    // 1️⃣ Check if user already exists
-    const existingUser = await AdUser.findOne({ $or: [{ email }, { phoneNumber }] });
+    // 1️⃣ Normalize email and phone
+    email = email.toLowerCase().trim();
+    phoneNumber = phoneNumber.trim();
+
+    // 2️⃣ Check if user already exists
+    const existingUser = await AdUser.findOne({
+      $or: [{ email }, { phoneNumber }]
+    });
     if (existingUser) {
+      console.log('Attempted signup with existing user:', existingUser);
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // 2️⃣ Hash password
+    // 3️⃣ Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 3️⃣ Create new user
+    // 4️⃣ Create new user
     const newUser = new AdUser({ email, phoneNumber, password: hashedPassword });
 
     try {
@@ -41,12 +48,10 @@ exports.signup = async (req, res) => {
       return res.status(500).json({ message: 'Error saving user to database' });
     }
 
-    // 4️⃣ Generate tokens safely
+    // 5️⃣ Generate tokens safely
     let accessToken, refreshToken;
-    const payload = { id: newUser._id.toString(), email }; // Convert ObjectId to string
+    const payload = { id: newUser._id.toString(), email };
     console.log('JWT Payload:', payload);
-    console.log('JWT_SECRET loaded?', !!process.env.JWT_SECRET);
-    console.log('JWT_REFRESH_SECRET loaded?', !!process.env.JWT_REFRESH_SECRET);
 
     try {
       accessToken = generateAccessToken(payload);
@@ -56,7 +61,7 @@ exports.signup = async (req, res) => {
       return res.status(500).json({ message: 'Token generation failed' });
     }
 
-    // 5️⃣ Return success
+    // 6️⃣ Return success
     res.status(201).json({
       message: 'User registered successfully',
       user: newUser,
