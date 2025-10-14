@@ -1,16 +1,19 @@
-console.log("JWT_SECRET:", process.env.JWT_SECRET);
-console.log("JWT_REFRESH_SECRET:", process.env.JWT_REFRESH_SECRET);
+require('dotenv').config(); // Ensure env variables are loaded
+
 const AdUser = require('../models/AdUser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Profile = require('../models/profile');
 
+// ✅ JWT Generators
 const generateAccessToken = (payload) => {
-  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }); // short life
+  if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET not set');
+  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 };
 
 const generateRefreshToken = (payload) => {
-  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: '30d' }); // long life
+  if (!process.env.JWT_REFRESH_SECRET) throw new Error('JWT_REFRESH_SECRET not set');
+  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: '30d' });
 };
 
 // 🟢 SIGNUP
@@ -32,7 +35,7 @@ exports.signup = async (req, res) => {
 
     try {
       await newUser.save();
-      console.log('User saved:', newUser._id);
+      console.log('User saved successfully:', newUser._id.toString());
     } catch (dbError) {
       console.error('Database save error:', dbError);
       return res.status(500).json({ message: 'Error saving user to database' });
@@ -40,9 +43,14 @@ exports.signup = async (req, res) => {
 
     // 4️⃣ Generate tokens safely
     let accessToken, refreshToken;
+    const payload = { id: newUser._id.toString(), email }; // Convert ObjectId to string
+    console.log('JWT Payload:', payload);
+    console.log('JWT_SECRET loaded?', !!process.env.JWT_SECRET);
+    console.log('JWT_REFRESH_SECRET loaded?', !!process.env.JWT_REFRESH_SECRET);
+
     try {
-      accessToken = generateAccessToken({ id: newUser._id, email });
-      refreshToken = generateRefreshToken({ id: newUser._id, email });
+      accessToken = generateAccessToken(payload);
+      refreshToken = generateRefreshToken(payload);
     } catch (tokenError) {
       console.error('JWT generation error:', tokenError);
       return res.status(500).json({ message: 'Token generation failed' });
@@ -61,6 +69,7 @@ exports.signup = async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 };
+
 
 // 🟢 LOGIN
 exports.login = async (req, res) => {
