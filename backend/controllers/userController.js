@@ -5,16 +5,16 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Profile = require('../models/profile');
 
-// ✅ JWT Generators
 const generateAccessToken = (payload) => {
   if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET not set');
-  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '100y' }); // practically never expires
 };
 
 const generateRefreshToken = (payload) => {
   if (!process.env.JWT_REFRESH_SECRET) throw new Error('JWT_REFRESH_SECRET not set');
-  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: '30d' });
+  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: '100y' }); // practically never expires
 };
+
 
 // 🟢 SIGNUP
 exports.signup = async (req, res) => {
