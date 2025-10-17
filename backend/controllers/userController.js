@@ -17,7 +17,7 @@ const generateRefreshToken = (payload) => {
 
 
 // 🟢 SIGNUP
-exports.signup = async (req, res) => {
+exports.signup = async (req, res) => { 
   try {
     let { email, phoneNumber, password } = req.body;
 
@@ -92,9 +92,9 @@ exports.login = async (req, res) => {
       await profile.save();
     }
 
-    const payload = { id: profile._id, email: profile.email };
-    const accessToken = generateAccessToken(payload);
-    const refreshToken = generateRefreshToken(payload);
+const payload = { id: user._id.toString(), email: user.email }; 
+const accessToken = generateAccessToken(payload);
+const refreshToken = generateRefreshToken(payload);
 
     res.status(200).json({
       message: 'Login successful',
@@ -122,3 +122,4 @@ exports.refreshToken = async (req, res) => {
     return res.status(403).json({ message: 'Invalid or expired refresh token' });
   }
 };
+
