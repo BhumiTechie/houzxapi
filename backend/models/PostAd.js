@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const PostAdSchema = new mongoose.Schema({
   title: { type: String, required: true },
-  address: { type: String, required: true },
+  address: { type: String, required: false},
   rent: { type: Number, required: true, set: val => Number(val) || 0 },
   deposit: { type: Number, default: 0, set: val => Number(val) || 0 },
   city: { type: String, required: true },
