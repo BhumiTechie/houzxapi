@@ -8,7 +8,7 @@ const PostAdSchema = new mongoose.Schema({
   city: { type: String, required: true },
   locationName: { type: String, required: true },
   availableFrom: { type: Date },
-  minStay: { type: String, default: '6 Months' },
+  minStay: { type: String, default: 'None' },
   maxStay: { type: String, default: 'None' },
   propertyType: { type: String, required: true },
   rooms: { 
