@@ -4,8 +4,15 @@ const mongoose = require('mongoose');
 const { Server } = require('socket.io');
 const app = require('./app');
 const Message = require('./models/Message');
+const cors = require('cors');
+
+const express = require('express');
 
 const server = http.createServer(app);
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const io = new Server(server, {
   cors: { origin: '*', methods: ['GET','POST'] }

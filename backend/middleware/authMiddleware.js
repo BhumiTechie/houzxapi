@@ -3,23 +3,27 @@ const jwt = require("jsonwebtoken");
 module.exports = (req, res, next) => {
   try {
     const authHeader = req.header("Authorization");
-
     if (!authHeader) {
-      return res.status(401).json({ message: "No token provided" });
+      return res.status(401).json({ error: "No token provided" });
     }
 
-    // remove "Bearer " part
     const token = authHeader.replace("Bearer ", "").trim();
-
-    // verify JWT
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // assign userId from token payload
-    req.userId = decoded.id || decoded._id;
+    console.log("✅ Decoded token payload:", decoded);
+
+    // ✅ Make sure token has id & email
+    if (!decoded.id || !decoded.email) {
+      return res.status(400).json({ error: "Invalid token payload" });
+    }
+
+    // ✅ Attach user data to req for later use
+    req.userId = decoded.id;
+    req.user = decoded;
 
     next();
-  } catch (err) {
-    console.error("❌ Auth Error:", err.message);
-    return res.status(401).json({ message: "Invalid or expired token" });
+  } catch (error) {
+    console.error("Auth error:", error.message);
+    return res.status(401).json({ error: "Invalid or expired token" });
   }
 };

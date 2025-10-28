@@ -20,10 +20,11 @@ const uploadRoutes = require('./routes/upload');
 
 const app = express();
 
-// ✅ Middlewares
+// Middleware
 app.use(cors());
-app.use(bodyParser.json());
-app.use(updateActivity); // activity middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 
 // ✅ API Routes
 app.use('/auth', authRoutes);
