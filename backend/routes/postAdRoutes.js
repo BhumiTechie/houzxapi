@@ -9,9 +9,19 @@ const Profile = require("../models/profile");
 // =========================================
 // CREATE POST (with up to 12 photos)
 // =========================================
-router.post("/", auth, upload.array("photos", 12), async (req, res) => {
+router.post(
+  "/",
+  auth,
+  upload.fields([
+    { name: "photos", maxCount: 12 },
+    { name: "floorPlan", maxCount: 1 },
+  ]),
+  async (req, res) => {
+
   try {
     console.log("✅ req.userId from auth middleware:", req.userId);
+    console.log("📥 req.body:", req.body);
+    console.log("📸 req.files:", req.files);
 
     // 🔹 Validate userId
     if (!mongoose.Types.ObjectId.isValid(req.userId)) {
@@ -27,18 +37,52 @@ router.post("/", auth, upload.array("photos", 12), async (req, res) => {
     const data = req.body || {};
     data.userId = userProfile._id; // ✅ assign Profile _id
 
-    // ✅ Handle uploaded files & JSON photos
-    const uploadedFiles = (req.files || []).map(file => `/uploads/${file.filename}`);
-    let photosFromBody = [];
+    // ✅ Handle floorPlan file upload
+    if (req.files && req.files.floorPlan && req.files.floorPlan.length > 0) {
+      data.floorPlan = `/uploads/${req.files.floorPlan[0].filename}`;
+    }
 
+    // ✅ Parse amenities JSON if sent as string
     try {
-      photosFromBody = typeof data.photos === "string" ? JSON.parse(data.photos) : data.photos || [];
+      if (typeof data.amenities === "string") {
+        data.amenities = JSON.parse(data.amenities);
+      }
+    } catch (err) {
+      console.warn("⚠️ Amenities parse error:", err.message);
+      data.amenities = {};
+    }
+
+    // ✅ Handle uploaded photos properly
+    let uploadedPhotos = [];
+    if (req.files && req.files.photos) {
+      uploadedPhotos = req.files.photos.map(f => `/uploads/${f.filename}`);
+    }
+
+    // ✅ Fallback to any existing photos in request body
+    let photosFromBody = [];
+    try {
+      photosFromBody =
+        typeof data.photos === "string" ? JSON.parse(data.photos) : data.photos || [];
     } catch {
       photosFromBody = data.photos || [];
     }
 
-    data.photos = uploadedFiles.length > 0 ? uploadedFiles : photosFromBody;
+    data.photos = uploadedPhotos.length > 0 ? uploadedPhotos : photosFromBody;
 
+    // ✅ Parse array fields that come stringified
+    ["additionalDetails", "suitableFor"].forEach((key) => {
+      if (typeof data[key] === "string") {
+        try {
+          data[key] = JSON.parse(data[key]);
+        } catch {
+          console.warn(`⚠️ Failed to parse ${key}`);
+        }
+      }
+    });
+
+    console.log("🧩 Final parsed data before saving:", data);
+
+    // ✅ Finally create post
     let postAd = new PostAd(data);
     await postAd.save();
 
@@ -61,14 +105,14 @@ router.post("/", auth, upload.array("photos", 12), async (req, res) => {
       : null;
 
     res.status(201).json({
-      message: "Post created successfully",
+      message: "Post created successfully ✅",
       post: {
         ...postAd.toObject(),
         advertiser,
       },
     });
   } catch (err) {
-    console.error("Error creating post:", err);
+    console.error("❌ Error creating post:", err);
     res.status(500).json({ error: "Something went wrong", details: err.message });
   }
 });
