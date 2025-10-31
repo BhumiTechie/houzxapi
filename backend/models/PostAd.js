@@ -42,7 +42,13 @@ const PostAdSchema = new mongoose.Schema({
     FourWheelerParking: { type: Boolean, default: false },
   },
 
-  additionalDetails: [{ type: String }],
+additionalDetails: [
+  {
+    label: { type: String },
+    value: { type: String },
+  },
+],
+
   suitableFor: [{ type: String }],
 
   nearestAirport: { 
