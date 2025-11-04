@@ -23,28 +23,41 @@ router.post(
       console.log("📥 req.body:", req.body);
       console.log("📸 req.files:", req.files);
 
-      // ✅ Parse JSON fields if they come as string
-      try {
-        if (typeof req.body.additionalDetails === "string") {
-          req.body.additionalDetails = JSON.parse(req.body.additionalDetails);
-        }
-        if (!Array.isArray(req.body.additionalDetails)) {
-  try {
-    req.body.additionalDetails = JSON.parse(req.body.additionalDetails || "[]");
-  } catch {
+// ✅ Parse JSON fields if they come as string
+try {
+  // ---- Additional Details ----
+  if (typeof req.body.additionalDetails === "string") {
+    try {
+      req.body.additionalDetails = JSON.parse(req.body.additionalDetails);
+    } catch {
+      req.body.additionalDetails = [];
+    }
+  }
+  if (!Array.isArray(req.body.additionalDetails)) {
     req.body.additionalDetails = [];
   }
+
+  // ---- Suitable For ----
+  if (typeof req.body.suitableFor === "string") {
+    try {
+      req.body.suitableFor = JSON.parse(req.body.suitableFor);
+    } catch {
+      req.body.suitableFor = [];
+    }
+  }
+
+  // ---- Amenities ----
+  if (typeof req.body.amenities === "string") {
+    try {
+      req.body.amenities = JSON.parse(req.body.amenities);
+    } catch {
+      req.body.amenities = {};
+    }
+  }
+} catch (err) {
+  console.warn("⚠️ JSON parse error:", err.message);
 }
 
-        if (typeof req.body.suitableFor === "string") {
-          req.body.suitableFor = JSON.parse(req.body.suitableFor);
-        }
-        if (typeof req.body.amenities === "string") {
-          req.body.amenities = JSON.parse(req.body.amenities);
-        }
-      } catch (err) {
-        console.warn("⚠️ JSON parse error:", err.message);
-      }
 
       // 🔹 Validate userId
       if (!mongoose.Types.ObjectId.isValid(req.userId)) {

@@ -42,12 +42,16 @@ const PostAdSchema = new mongoose.Schema({
     FourWheelerParking: { type: Boolean, default: false },
   },
 
-additionalDetails: [
-  {
-    label: { type: String },
-    value: { type: String },
-  },
-],
+additionalDetails: {
+  type: [
+    {
+      label: { type: String, trim: true },
+      value: { type: String, trim: true },
+    },
+  ],
+  default: [],
+},
+
 
   suitableFor: [{ type: String }],
 
