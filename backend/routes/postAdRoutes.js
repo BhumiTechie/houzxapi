@@ -28,6 +28,14 @@ router.post(
         if (typeof req.body.additionalDetails === "string") {
           req.body.additionalDetails = JSON.parse(req.body.additionalDetails);
         }
+        if (!Array.isArray(req.body.additionalDetails)) {
+  try {
+    req.body.additionalDetails = JSON.parse(req.body.additionalDetails || "[]");
+  } catch {
+    req.body.additionalDetails = [];
+  }
+}
+
         if (typeof req.body.suitableFor === "string") {
           req.body.suitableFor = JSON.parse(req.body.suitableFor);
         }
@@ -51,7 +59,7 @@ router.post(
 
       const data = req.body || {};
       data.userId = userProfile._id;
-
+ 
 
       // ✅ Handle floorPlan file upload
       if (req.files && req.files.floorPlan && req.files.floorPlan.length > 0) {
