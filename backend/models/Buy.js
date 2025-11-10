@@ -16,10 +16,7 @@ const BuySchema = new mongoose.Schema({
   photos: [String],
   floorPlanImage: String,
 
-  amenities: {
-    type: Map,
-    of: Boolean
-  },
+  amenities: { type: [String], default: [] },
 
   additionalDetails: [String],
 
