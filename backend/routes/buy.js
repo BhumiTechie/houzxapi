@@ -54,7 +54,10 @@ const Profile = require("../models/profile");
 const auth = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 
-router.post("/", auth, upload.array("photos", 12), async (req, res) => {
+router.post("/", auth, upload.fields([
+  { name: "photos", maxCount: 12 },
+  { name: "floorPlanImage", maxCount: 1 }, // <-- ye add karna hai
+]), async (req, res) => {
   try {
     const data = req.body || {};
   // Uploaded images

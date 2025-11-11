@@ -18,7 +18,15 @@ const BuySchema = new mongoose.Schema({
 
   amenities: { type: [String], default: [] },
 
-  additionalDetails: [String],
+
+
+  // ✅ Corrected:
+  additionalDetails: [
+    {
+      label: { type: String },
+      value: { type: String }
+    }
+  ],
 
 // ✅ new: reference to User collection
  userId: { type: mongoose.Schema.Types.ObjectId,  ref: 'Profile', required: true },
