@@ -7,65 +7,92 @@ const Profile = require("../models/profile");
 const auth = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 
-router.post("/", auth, upload.fields([
-  { name: "photos", maxCount: 12 },
-  { name: "floorPlanImage", maxCount: 1 },
-]), async (req, res) => {
-  try {
-    const data = req.body || {};
+router.post(
+  "/",
+  auth,
+  upload.fields([
+    { name: "photos", maxCount: 12 },
+    { name: "floorPlanImage", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      const data = req.body || {};
 
-    // ✅ Fix additionalDetails parsing
-    if (typeof data.additionalDetails === "string") {
-      try {
-        data.additionalDetails = JSON.parse(data.additionalDetails);
-      } catch (e) {
-        console.warn("⚠️ Failed to parse additionalDetails JSON:", e.message);
-        data.additionalDetails = [];
-      }
-    }
-
-    // ✅ Correct handling of uploaded files
-    data.photos = req.files?.photos
-      ? req.files.photos.map(file => `/uploads/${file.filename}`)
-      : [];
-
-    data.floorPlanImage = req.files?.floorPlanImage?.[0]
-      ? `/uploads/${req.files.floorPlanImage[0].filename}`
-      : null;
-
-    if (!mongoose.Types.ObjectId.isValid(req.userId)) {
-      return res.status(400).json({ error: "Invalid userId in token" });
-    }
-
-    data.userId = new mongoose.Types.ObjectId(req.userId);
-
-    const newProperty = new Buy(data);
-    await newProperty.save();
-
-    const savedProperty = await Buy.findById(newProperty._id).populate(
-      "userId",
-      "firstName lastName profileImage lastActive isOnline email"
-    );
-
-    const advertiser = savedProperty.userId
-      ? {
-          _id: savedProperty.userId._id,
-          fullName: `${savedProperty.userId.firstName || ""} ${savedProperty.userId.lastName || ""}`.trim() || savedProperty.userId.email,
-          profileImage: savedProperty.userId.profileImage || "https://via.placeholder.com/150",
-          lastActive: savedProperty.userId.lastActive,
-          isOnline: savedProperty.userId.isOnline,
+      // 🟢 Parse and clean additionalDetails
+      if (typeof data.additionalDetails === "string") {
+        try {
+          data.additionalDetails = JSON.parse(data.additionalDetails);
+        } catch (e) {
+          console.warn("⚠️ Failed to parse additionalDetails JSON:", e.message);
+          data.additionalDetails = [];
         }
-      : null;
+      }
 
-    res.status(201).json({
-      message: "Post created successfully",
-      post: { ...savedProperty.toObject(), advertiser },
-    });
-  } catch (err) {
-    console.error("Error creating post:", err);
-    res.status(500).json({ error: "Something went wrong", details: err.message });
+      if (Array.isArray(data.additionalDetails)) {
+        data.additionalDetails = data.additionalDetails.map((item) => ({
+          label: item.label || "None",
+          value: Array.isArray(item.value)
+            ? item.value.join(", ") || "Not specified"
+            : item.value || "Not specified",
+        }));
+      }
+
+      // 🟢 Handle uploaded images
+      data.photos = req.files?.photos
+        ? req.files.photos.map((file) => `${BASE_URL}/uploads/${file.filename}`)
+        : [];
+
+      data.floorPlanImage = req.files?.floorPlanImage?.[0]
+        ? `${BASE_URL}/uploads/${req.files.floorPlanImage[0].filename}`
+        : null;
+
+      // 🟢 Ensure valid userId
+      if (!mongoose.Types.ObjectId.isValid(req.userId)) {
+        return res.status(400).json({ error: "Invalid userId in token" });
+      }
+
+      data.userId = new mongoose.Types.ObjectId(req.userId);
+
+      // 🟢 Fix city/locality mapping
+      data.city = req.body.city;
+      data.locality = req.body.locality;
+
+      const newProperty = new Buy(data);
+      await newProperty.save();
+
+      // 🟢 Populate user data
+      const savedProperty = await Buy.findById(newProperty._id).populate(
+        "userId",
+        "firstName lastName profileImage lastActive isOnline email"
+      );
+
+      const advertiser = savedProperty.userId
+        ? {
+            _id: savedProperty.userId._id,
+            fullName:
+              `${savedProperty.userId.firstName || ""} ${
+                savedProperty.userId.lastName || ""
+              }`.trim() || savedProperty.userId.email,
+            profileImage:
+              savedProperty.userId.profileImage ||
+              "https://via.placeholder.com/150",
+            lastActive: savedProperty.userId.lastActive,
+            isOnline: savedProperty.userId.isOnline,
+          }
+        : null;
+
+      res.status(201).json({
+        message: "Post created successfully",
+        post: { ...savedProperty.toObject(), advertiser },
+      });
+    } catch (err) {
+      console.error("❌ Error creating post:", err);
+      res
+        .status(500)
+        .json({ error: "Something went wrong", details: err.message });
+    }
   }
-});
+);
 
 
 router.get("/", async (req, res) => {
