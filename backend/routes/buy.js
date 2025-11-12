@@ -54,69 +54,56 @@ const Profile = require("../models/profile");
 const auth = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 
-router.post(
-  "/",
-  auth,
-  upload.fields([
-    { name: "photos", maxCount: 12 },
-    { name: "floorPlanImage", maxCount: 1 },
-  ]),
-  async (req, res) => {
-    try {
-      const data = req.body;
+router.post("/", auth, upload.fields([
+  { name: "photos", maxCount: 12 },
+  { name: "floorPlanImage", maxCount: 1 },
+]), async (req, res) => {
+  try {
+    const data = req.body || {};
 
-      // ✅ Parse JSON fields
-      data.amenities = data.amenities ? JSON.parse(data.amenities) : [];
-      data.additionalDetails = data.additionalDetails
-        ? JSON.parse(data.additionalDetails)
-        : {};
+    // ✅ Correct handling of uploaded files
+    data.photos = req.files?.photos
+      ? req.files.photos.map(file => `/uploads/${file.filename}`)
+      : [];
 
-      // ✅ Handle uploaded files
-      const uploadedPhotos =
-        req.files?.photos?.map((file) => `/uploads/${file.filename}`) || [];
+    data.floorPlanImage = req.files?.floorPlanImage?.[0]
+      ? `/uploads/${req.files.floorPlanImage[0].filename}`
+      : null;
 
-      const floorPlan =
-        req.files?.floorPlanImage?.[0]
-          ? `/uploads/${req.files.floorPlanImage[0].filename}`
-          : null;
-
-      data.photos = uploadedPhotos;
-      data.floorPlanImage = floorPlan;
-
-      data.userId = new mongoose.Types.ObjectId(req.userId);
-
-      const newProperty = new Buy(data);
-      await newProperty.save();
-
-      const savedProperty = await Buy.findById(newProperty._id).populate(
-        "userId",
-        "firstName lastName profileImage lastActive isOnline email"
-      );
-
-      const advertiser = savedProperty.userId
-        ? {
-            _id: savedProperty.userId._id,
-            fullName:
-              `${savedProperty.userId.firstName || ""} ${savedProperty.userId.lastName || ""}`.trim() ||
-              savedProperty.userId.email,
-            profileImage:
-              savedProperty.userId.profileImage ||
-              "https://via.placeholder.com/150",
-            lastActive: savedProperty.userId.lastActive,
-            isOnline: savedProperty.userId.isOnline,
-          }
-        : null;
-
-      res.status(201).json({
-        message: "Post created successfully",
-        post: { ...savedProperty.toObject(), advertiser },
-      });
-    } catch (err) {
-      console.error("Error creating post:", err);
-      res.status(500).json({ error: "Something went wrong", details: err.message });
+    if (!mongoose.Types.ObjectId.isValid(req.userId)) {
+      return res.status(400).json({ error: "Invalid userId in token" });
     }
+
+    data.userId = new mongoose.Types.ObjectId(req.userId);
+
+    const newProperty = new Buy(data);
+    await newProperty.save();
+
+    const savedProperty = await Buy.findById(newProperty._id).populate(
+      "userId",
+      "firstName lastName profileImage lastActive isOnline email"
+    );
+
+    const advertiser = savedProperty.userId
+      ? {
+          _id: savedProperty.userId._id,
+          fullName: `${savedProperty.userId.firstName || ""} ${savedProperty.userId.lastName || ""}`.trim() || savedProperty.userId.email,
+          profileImage: savedProperty.userId.profileImage || "https://via.placeholder.com/150",
+          lastActive: savedProperty.userId.lastActive,
+          isOnline: savedProperty.userId.isOnline,
+        }
+      : null;
+
+    res.status(201).json({
+      message: "Post created successfully",
+      post: { ...savedProperty.toObject(), advertiser },
+    });
+  } catch (err) {
+    console.error("Error creating post:", err);
+    res.status(500).json({ error: "Something went wrong", details: err.message });
   }
-);
+});
+
 
 router.get("/", async (req, res) => {
   try {

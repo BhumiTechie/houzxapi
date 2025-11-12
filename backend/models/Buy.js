@@ -20,13 +20,24 @@ const BuySchema = new mongoose.Schema({
 
 
 
-  // ✅ Corrected:
-  additionalDetails: [
-    {
-      label: { type: String },
-      value: { type: String }
-    }
-  ],
+additionalDetails: [
+  {
+    label: {
+      type: String,
+      enum: [
+        'Nearest Station',
+        'Nearest Bus Stop',
+        'Nearest Airport',
+        'Nearest School',
+        'Nearest College',
+        'Nearest Hospital',
+        'None'
+      ]
+    },
+    value: { type: String }
+  }
+]
+
 
 // ✅ new: reference to User collection
  userId: { type: mongoose.Schema.Types.ObjectId,  ref: 'Profile', required: true },
