@@ -34,7 +34,7 @@ additionalDetails: [
         'None'
       ]
     },
-    value: { type: String }
+   value: { type: mongoose.Schema.Types.Mixed } 
   }
 ],
 
