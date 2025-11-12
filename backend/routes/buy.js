@@ -6,7 +6,7 @@ const Buy = require("../models/Buy");
 const Profile = require("../models/profile");
 const auth = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
-
+const BASE_URL = process.env.BASE_URL || "https://houzxapi-1.onrender.com";
 router.post(
   "/",
   auth,
