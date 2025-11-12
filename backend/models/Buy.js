@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const BuySchema = new mongoose.Schema({
   propertyPrice: { type: Number, required: true },
   propertyType: { type: String, required: true },
-  rooms: Number,
+rooms: { type: String }, // change from Number
   bathroom: Number,
   area: String,
 

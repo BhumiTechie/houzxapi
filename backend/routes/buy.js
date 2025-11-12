@@ -61,6 +61,16 @@ router.post("/", auth, upload.fields([
   try {
     const data = req.body || {};
 
+    // ✅ Fix additionalDetails parsing
+    if (typeof data.additionalDetails === "string") {
+      try {
+        data.additionalDetails = JSON.parse(data.additionalDetails);
+      } catch (e) {
+        console.warn("⚠️ Failed to parse additionalDetails JSON:", e.message);
+        data.additionalDetails = [];
+      }
+    }
+
     // ✅ Correct handling of uploaded files
     data.photos = req.files?.photos
       ? req.files.photos.map(file => `/uploads/${file.filename}`)
