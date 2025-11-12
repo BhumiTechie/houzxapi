@@ -54,59 +54,70 @@ const Profile = require("../models/profile");
 const auth = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 
-router.post("/", auth, upload.fields([
-  { name: "photos", maxCount: 12 },
-  { name: "floorPlanImage", maxCount: 1 }, // <-- ye add karna hai
-]), async (req, res) => {
-  try {
-    const data = req.body || {};
-  // Uploaded images
- // multer se upload hone wali files
-    const uploadedFiles = (req.files || []).map(file => `/uploads/${file.filename}`);
-    data.photos = uploadedFiles;
-    if (!mongoose.Types.ObjectId.isValid(req.userId)) {
-      return res.status(400).json({ error: "Invalid userId in token" });
+router.post(
+  "/",
+  auth,
+  upload.fields([
+    { name: "photos", maxCount: 12 },
+    { name: "floorPlanImage", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      const data = req.body;
+
+      // ✅ Parse JSON fields
+      data.amenities = data.amenities ? JSON.parse(data.amenities) : [];
+      data.additionalDetails = data.additionalDetails
+        ? JSON.parse(data.additionalDetails)
+        : {};
+
+      // ✅ Handle uploaded files
+      const uploadedPhotos =
+        req.files?.photos?.map((file) => `/uploads/${file.filename}`) || [];
+
+      const floorPlan =
+        req.files?.floorPlanImage?.[0]
+          ? `/uploads/${req.files.floorPlanImage[0].filename}`
+          : null;
+
+      data.photos = uploadedPhotos;
+      data.floorPlanImage = floorPlan;
+
+      data.userId = new mongoose.Types.ObjectId(req.userId);
+
+      const newProperty = new Buy(data);
+      await newProperty.save();
+
+      const savedProperty = await Buy.findById(newProperty._id).populate(
+        "userId",
+        "firstName lastName profileImage lastActive isOnline email"
+      );
+
+      const advertiser = savedProperty.userId
+        ? {
+            _id: savedProperty.userId._id,
+            fullName:
+              `${savedProperty.userId.firstName || ""} ${savedProperty.userId.lastName || ""}`.trim() ||
+              savedProperty.userId.email,
+            profileImage:
+              savedProperty.userId.profileImage ||
+              "https://via.placeholder.com/150",
+            lastActive: savedProperty.userId.lastActive,
+            isOnline: savedProperty.userId.isOnline,
+          }
+        : null;
+
+      res.status(201).json({
+        message: "Post created successfully",
+        post: { ...savedProperty.toObject(), advertiser },
+      });
+    } catch (err) {
+      console.error("Error creating post:", err);
+      res.status(500).json({ error: "Something went wrong", details: err.message });
     }
-
-    // ✅ link post with Profile._id
-    data.userId = new mongoose.Types.ObjectId(req.userId);
-    
-
-    // ✅ instance ka naam change
-    const newProperty = new Buy(data);
-    await newProperty.save();
-
-    // ✅ Populate advertiser from Profile
-    const savedProperty = await Buy.findById(newProperty._id).populate(
-      "userId",
-      "firstName lastName profileImage lastActive isOnline email"
-    );
-
-    const advertiser = savedProperty.userId
-      ? {
-          _id: savedProperty.userId._id,
-          fullName:
-            `${savedProperty.userId.firstName || ""} ${savedProperty.userId.lastName || ""}`.trim() ||
-            savedProperty.userId.email,
-          profileImage:
-            savedProperty.userId.profileImage || "https://via.placeholder.com/150",
-          lastActive: savedProperty.userId.lastActive,
-          isOnline: savedProperty.userId.isOnline,
-        }
-      : null;
-
-    res.status(201).json({
-      message: "Post created successfully",
-      post: {
-        ...savedProperty.toObject(),
-        advertiser,
-      },
-    });
-  } catch (err) {
-    console.error("Error creating post:", err);
-    res.status(500).json({ error: "Something went wrong", details: err.message });
   }
-});
+);
+
 router.get("/", async (req, res) => {
   try {
     const { city, location, minBudget, maxBudget, propertyTypes, furnishTypes } = req.query;
