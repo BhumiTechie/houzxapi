@@ -36,7 +36,7 @@ additionalDetails: [
     },
     value: { type: String }
   }
-]
+],
 
 
 // ✅ new: reference to User collection
