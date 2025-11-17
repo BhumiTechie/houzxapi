@@ -28,7 +28,13 @@ const HousematePostSchema = new mongoose.Schema({
   maxStay: { type: String, default: 'None' },
   floorPlan: { type: String }, // URL of floor plan image
   photos: [{ type: String }], // URLs of images
-  additionalDetails: [{ type: String }], // e.g., Nearest Airport
+additionalDetails: [
+  {
+    label: String,
+    value: String
+  }
+]
+
 
   // 👇 yeh important hai
   postedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Profile', required: true },
