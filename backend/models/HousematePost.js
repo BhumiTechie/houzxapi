@@ -33,9 +33,7 @@ additionalDetails: [
     label: String,
     value: String
   }
-]
-
-
+],
   // 👇 yeh important hai
   postedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Profile', required: true },
 }, { timestamps: true });
