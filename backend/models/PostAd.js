@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const PostAdSchema = new mongoose.Schema({
-  title: { type: String, required: true },
+  title: { type: String, required: false},
   address: { type: String, required: false},
   rent: { type: Number, required: true, set: val => Number(val) || 0 },
   deposit: { type: Number, default: 0, set: val => Number(val) || 0 },
@@ -25,6 +25,7 @@ const PostAdSchema = new mongoose.Schema({
   photos: [{ type: String, set: val => (val.uri ? val.uri : val) }],
   floorPlan: { type: String },
   description: { type: String },
+  
 
   amenities: {
     Wifi: { type: Boolean, default: false },
@@ -41,7 +42,11 @@ const PostAdSchema = new mongoose.Schema({
     TwoWheelerParking: { type: Boolean, default: false },
     FourWheelerParking: { type: Boolean, default: false },
   },
-
+ furnishType: {
+    fullyFurnished: { type: Boolean, default: false },
+    partFurnished: { type: Boolean, default: false },
+    unfurnished: { type: Boolean, default: false }
+  },
 additionalDetails: {
   type: [
     {

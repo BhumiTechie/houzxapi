@@ -28,6 +28,11 @@ const HousematePostSchema = new mongoose.Schema({
   maxStay: { type: String, default: 'None' },
   floorPlan: { type: String }, // URL of floor plan image
   photos: [{ type: String }], // URLs of images
+   furnishType: {
+    fullyFurnished: { type: Boolean, default: false },
+    partFurnished: { type: Boolean, default: false },
+    unfurnished: { type: Boolean, default: false }
+  },
 additionalDetails: [
   {
     label: String,

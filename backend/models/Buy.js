@@ -17,6 +17,12 @@ rooms: { type: String }, // change from Number
   floorPlanImage: String,
 
   amenities: { type: [String], default: [] },
+  
+   furnishType: {
+    fullyFurnished: { type: Boolean, default: false },
+    partFurnished: { type: Boolean, default: false },
+    unfurnished: { type: Boolean, default: false }
+  },
 
 
 
