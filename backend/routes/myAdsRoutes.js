@@ -1,3 +1,4 @@
+// routes/myAds.js
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
@@ -5,29 +6,72 @@ const mongoose = require("mongoose");
 const Buy = require("../models/Buy");
 const PostAd = require("../models/PostAd");
 const HousematePost = require("../models/HousematePost");
+const Profile = require("../models/profile");
 
-router.get("/myads/:userId", async (req, res) => {
+// Helper function to format advertiser
+const formatAdvertiser = (user) =>
+  user
+    ? {
+        _id: user._id,
+        fullName: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email,
+        profileImage: user.profileImage || "https://via.placeholder.com/150",
+        lastActive: user.lastActive,
+        isOnline: user.isOnline,
+      }
+    : null;
+
+// Unified route: GET /my-ads/:userId
+router.get("/:userId", async (req, res) => {
   try {
-    let userId = req.params.userId;
+    const { userId } = req.params;
 
-    // 🔥 Convert string → ObjectId
-    userId = new mongoose.Types.ObjectId(userId);
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ success: false, message: "Invalid userId" });
+    }
 
-    const buy = await Buy.find({ userId });
-    const rent = await PostAd.find({ userId });
-    const housemate = await HousematePost.find({ postedBy: userId });
+    // Find profile for the given userId
+    const profile = await Profile.findById(userId);
+    if (!profile) {
+      return res.status(404).json({ success: false, message: "Profile not found" });
+    }
 
-    return res.json({
-      success: true,
-      ads: [...buy, ...rent, ...housemate],
-    });
+    // Fetch Buy ads
+    const buyAds = await Buy.find({ userId }).populate(
+      "userId",
+      "firstName lastName profileImage lastActive isOnline email"
+    );
 
+    // Fetch PostAd ads
+    const postAds = await PostAd.find({ userId }).populate(
+      "userId",
+      "firstName lastName profileImage lastActive isOnline email"
+    );
+
+    // Fetch HousematePost ads
+    const housemateAds = await HousematePost.find({ postedBy: userId }).populate(
+      "postedBy",
+      "firstName lastName profileImage lastActive isOnline email"
+    );
+
+    // Format all ads with advertiser
+    const formatAd = (ad, userField = "userId") => {
+      const user = ad[userField];
+      return {
+        ...ad.toObject(),
+        advertiser: formatAdvertiser(user),
+      };
+    };
+
+    const allAds = [
+      ...buyAds.map((ad) => formatAd(ad, "userId")),
+      ...postAds.map((ad) => formatAd(ad, "userId")),
+      ...housemateAds.map((ad) => formatAd(ad, "postedBy")),
+    ];
+
+    res.json({ success: true, ads: allAds });
   } catch (err) {
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: err.message
-    });
+    console.error("❌ Error fetching my ads:", err);
+    res.status(500).json({ success: false, message: "Server error", error: err.message });
   }
 });
 
