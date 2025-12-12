@@ -1,29 +1,33 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
-const Buy = require('../models/Buy');
-const HousematePost = require('../models/HousematePost');
-const PostAd = require('../models/PostAd');
+const Buy = require("../models/Buy");
+const PostAd = require("../models/PostAd");
+const HousematePost = require("../models/HousematePost");
 
 router.get("/myads/:userId", async (req, res) => {
-  const { userId } = req.params;
-
   try {
-    const buyAds = await Buy.find({ userId }).lean();
-    const rentAds = await PostAd.find({ userId }).lean();
-    const housemateAds = await HousematePost.find({ postedBy: userId }).lean();
+    const userId = req.params.userId;
 
-    const allAds = [
-      ...buyAds.map(a => ({ ...a, category: 'buy' })),
-      ...rentAds.map(a => ({ ...a, category: 'rent' })),
-      ...housemateAds.map(a => ({ ...a, category: 'housemate' }))
-    ];
+    const buy = await Buy.find({ userId });
+    const rent = await PostAd.find({ userId });
+    const housemate = await HousematePost.find({ postedBy: userId });
 
-    res.json({ ads: allAds });
+    return res.json({
+      success: true,
+      ads: [
+        ...buy,
+        ...rent,
+        ...housemate
+      ]
+    });
 
   } catch (err) {
-    console.error("MyAds Error:", err);
-    res.status(500).json({ message: "Error fetching ads" });
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: err.message
+    });
   }
 });
 
