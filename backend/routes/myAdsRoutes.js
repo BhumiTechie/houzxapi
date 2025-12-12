@@ -2,13 +2,14 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
+const authMiddleware = require("../middleware/auth"); // your token middleware
 
 const Buy = require("../models/Buy");
 const PostAd = require("../models/PostAd");
 const HousematePost = require("../models/HousematePost");
 const Profile = require("../models/profile");
 
-// Helper function to format advertiser
+// Helper to format advertiser
 const formatAdvertiser = (user) =>
   user
     ? {
@@ -20,40 +21,20 @@ const formatAdvertiser = (user) =>
       }
     : null;
 
-// Unified route: GET /my-ads/:userId
-router.get("/:userId", async (req, res) => {
+// GET /myads - only fetch ads for logged-in user
+router.get("/", authMiddleware, async (req, res) => {
   try {
-    const { userId } = req.params;
+    const userId = req.user.id;
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ success: false, message: "Invalid userId" });
     }
 
-    // Find profile for the given userId
-    const profile = await Profile.findById(userId);
-    if (!profile) {
-      return res.status(404).json({ success: false, message: "Profile not found" });
-    }
+    // Fetch ads from all collections for this user
+    const buyAds = await Buy.find({ userId }).populate("userId", "firstName lastName profileImage lastActive isOnline email");
+    const postAds = await PostAd.find({ userId }).populate("userId", "firstName lastName profileImage lastActive isOnline email");
+    const housemateAds = await HousematePost.find({ postedBy: userId }).populate("postedBy", "firstName lastName profileImage lastActive isOnline email");
 
-    // Fetch Buy ads
-    const buyAds = await Buy.find({ userId }).populate(
-      "userId",
-      "firstName lastName profileImage lastActive isOnline email"
-    );
-
-    // Fetch PostAd ads
-    const postAds = await PostAd.find({ userId }).populate(
-      "userId",
-      "firstName lastName profileImage lastActive isOnline email"
-    );
-
-    // Fetch HousematePost ads
-    const housemateAds = await HousematePost.find({ postedBy: userId }).populate(
-      "postedBy",
-      "firstName lastName profileImage lastActive isOnline email"
-    );
-
-    // Format all ads with advertiser
     const formatAd = (ad, userField = "userId") => {
       const user = ad[userField];
       return {
@@ -63,9 +44,9 @@ router.get("/:userId", async (req, res) => {
     };
 
     const allAds = [
-      ...buyAds.map((ad) => formatAd(ad, "userId")),
-      ...postAds.map((ad) => formatAd(ad, "userId")),
-      ...housemateAds.map((ad) => formatAd(ad, "postedBy")),
+      ...buyAds.map(ad => formatAd(ad, "userId")),
+      ...postAds.map(ad => formatAd(ad, "userId")),
+      ...housemateAds.map(ad => formatAd(ad, "postedBy")),
     ];
 
     res.json({ success: true, ads: allAds });
