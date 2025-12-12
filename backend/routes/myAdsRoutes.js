@@ -2,7 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const mongoose = require("mongoose");
-const authMiddleware = require("../middleware/auth"); // your token middleware
+const authMiddleware = require('../middleware/authMiddleware')
 
 const Buy = require("../models/Buy");
 const PostAd = require("../models/PostAd");
