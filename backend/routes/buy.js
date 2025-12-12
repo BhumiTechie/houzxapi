@@ -17,6 +17,20 @@ router.post(
   async (req, res) => {
     try {
       const data = req.body || {};
+      // 🟡 Parse furnishType (IMPORTANT)
+if (typeof data.furnishType === "string") {
+  try {
+    data.furnishType = JSON.parse(data.furnishType);
+  } catch (e) {
+    console.warn("⚠️ Failed to parse furnishType JSON:", e.message);
+    data.furnishType = {
+      fullyFurnished: false,
+      semiFurnished: false,
+      unfurnished: false,
+    };
+  }
+}
+
 
       // 🟢 Parse and clean additionalDetails
       if (typeof data.additionalDetails === "string") {

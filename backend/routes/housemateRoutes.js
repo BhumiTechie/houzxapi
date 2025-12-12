@@ -2,11 +2,11 @@ const express = require('express');
 const mongoose = require('mongoose');
 const router = express.Router();
 const HousematePost = require('../models/HousematePost');
-const Profile = require('../models/profile'); // advertiser ke liye
+const Profile = require('../models/profile');
 const auth = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
 
-// 🔹 Helper function: advertiser format
+// Helper
 const formatAdvertiser = (user) =>
   user
     ? {
@@ -18,7 +18,7 @@ const formatAdvertiser = (user) =>
       }
     : null;
 
-// 🔹 Get all posts
+// GET all posts
 router.get('/', async (req, res) => {
   try {
     const posts = await HousematePost.find().populate(
@@ -26,18 +26,18 @@ router.get('/', async (req, res) => {
       'firstName lastName profileImage lastActive isOnline'
     );
 
-    const formattedPosts = posts.map((post) => ({
+    const formatted = posts.map((post) => ({
       ...post.toObject(),
       advertiser: formatAdvertiser(post.postedBy),
     }));
 
-    res.json({ success: true, posts: formattedPosts });
+    res.json({ success: true, posts: formatted });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// 🔹 Get single post by ID
+// GET single
 router.get('/:id', async (req, res) => {
   try {
     const post = await HousematePost.findById(req.params.id).populate(
@@ -45,7 +45,8 @@ router.get('/:id', async (req, res) => {
       'firstName lastName profileImage lastActive isOnline'
     );
 
-    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+    if (!post)
+      return res.status(404).json({ success: false, message: 'Post not found' });
 
     res.json({
       success: true,
@@ -59,30 +60,30 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// 🔹 Create a new post
+// CREATE with furnishType FIX
 router.post('/', auth, upload.array("photos", 12), async (req, res) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.userId)) {
-      return res.status(400).json({ success: false, error: 'Invalid userId in token' });
-    }
-    // Uploaded images
     const uploadedFiles = (req.files || []).map(file => `/uploads/${file.filename}`);
     req.body.photos = uploadedFiles;
-    const userObjectId = new mongoose.Types.ObjectId(req.userId);
 
-    const profileExists = await Profile.findById(userObjectId);
-    if (!profileExists) {
-      return res.status(400).json({ success: false, error: 'User not found in DB. Token invalid or user deleted.' });
+    if (typeof req.body.furnishType === "string") {
+      try {
+        req.body.furnishType = JSON.parse(req.body.furnishType);
+      } catch {
+        req.body.furnishType = {
+          fullyFurnished: false,
+          partFurnished: false,
+          unfurnished: false
+        };
+      }
     }
 
-    const newPost = new HousematePost({
-      ...req.body,
-      postedBy: userObjectId,
-    });
+    req.body.postedBy = new mongoose.Types.ObjectId(req.userId);
 
+    const newPost = new HousematePost(req.body);
     await newPost.save();
 
-    const populatedPost = await HousematePost.findById(newPost._id).populate(
+    const populated = await HousematePost.findById(newPost._id).populate(
       'postedBy',
       'firstName lastName profileImage lastActive isOnline'
     );
@@ -91,8 +92,8 @@ router.post('/', auth, upload.array("photos", 12), async (req, res) => {
       success: true,
       message: 'Post created successfully',
       post: {
-        ...populatedPost.toObject(),
-        advertiser: formatAdvertiser(populatedPost.postedBy),
+        ...populated.toObject(),
+        advertiser: formatAdvertiser(populated.postedBy),
       },
     });
   } catch (err) {
@@ -100,26 +101,30 @@ router.post('/', auth, upload.array("photos", 12), async (req, res) => {
   }
 });
 
-// 🔹 Update post (with ownership check)
+// UPDATE
 router.put('/:id', auth, async (req, res) => {
   try {
-    const post = await HousematePost.findById(req.params.id);
-    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
-
-    // ✅ Ownership check
-    if (post.postedBy.toString() !== req.userId) {
-      return res.status(403).json({ success: false, message: 'Not authorized to update this post' });
+    if (typeof req.body.furnishType === "string") {
+      try {
+        req.body.furnishType = JSON.parse(req.body.furnishType);
+      } catch {}
     }
 
-    const updatedPost = await HousematePost.findByIdAndUpdate(req.params.id, req.body, {
+    const post = await HousematePost.findById(req.params.id);
+    if (!post) return res.status(404).json({ success: false });
+
+    if (post.postedBy.toString() !== req.userId)
+      return res.status(403).json({ success: false });
+
+    const updated = await HousematePost.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     }).populate('postedBy', 'firstName lastName profileImage lastActive isOnline');
 
     res.json({
       success: true,
       post: {
-        ...updatedPost.toObject(),
-        advertiser: formatAdvertiser(updatedPost.postedBy),
+        ...updated.toObject(),
+        advertiser: formatAdvertiser(updated.postedBy),
       },
     });
   } catch (err) {
@@ -127,21 +132,20 @@ router.put('/:id', auth, async (req, res) => {
   }
 });
 
-// 🔹 Delete post (with ownership check)
+// DELETE
 router.delete('/:id', auth, async (req, res) => {
   try {
-    const post = await HousematePost.findById(req.params.id);
-    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+    const post = await HousematePost.findOneAndDelete({
+      _id: req.params.id,
+      postedBy: req.userId,
+    });
 
-    // ✅ Ownership check
-    if (post.postedBy.toString() !== req.userId) {
-      return res.status(403).json({ success: false, message: 'Not authorized to delete this post' });
-    }
+    if (!post)
+      return res.status(404).json({ success: false, message: "Not found" });
 
-    await HousematePost.findByIdAndDelete(req.params.id);
-    res.json({ success: true, message: 'Post deleted successfully' });
+    res.json({ success: true, message: 'Deleted successfully' });
   } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
+    res.status(500).json({ success: false });
   }
 });
 

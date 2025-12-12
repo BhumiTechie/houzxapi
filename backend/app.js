@@ -17,6 +17,7 @@ const messageRoutes = require('./routes/messages');
 const BuyRoutes = require('./routes/buy');
 const tenantRoutes = require('./routes/tenant');
 const uploadRoutes = require('./routes/upload');
+const MyAdsRoutes = require('./routes/myAdsRoutes');
 
 const app = express();
 
@@ -38,7 +39,11 @@ app.use('/messages', messageRoutes);
 app.use('/buy', BuyRoutes);
 app.use('/tenant', tenantRoutes); 
 
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// app.use('/upload', uploadRoutes);
+app.use('/myads', MyAdsRoutes);
 
 
 

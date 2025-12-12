@@ -88,6 +88,20 @@ try {
         console.warn("⚠️ Amenities parse error:", err.message);
         data.amenities = {};
       }
+      // ---- Furnish Type ----
+if (typeof data.furnishType === "string") {
+  try {
+    data.furnishType = JSON.parse(data.furnishType);
+  } catch (err) {
+    console.warn("⚠️ FurnishType parse error:", err.message);
+    data.furnishType = {
+      fullyFurnished: false,
+      partFurnished: false,
+      unfurnished: false
+    };
+  }
+}
+
 
       // ✅ Handle uploaded photos properly
       let uploadedPhotos = [];
