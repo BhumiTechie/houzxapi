@@ -79,6 +79,7 @@ router.post('/', auth, upload.array("photos", 12), async (req, res) => {
     }
 
     req.body.postedBy = new mongoose.Types.ObjectId(req.userId);
+    req.body.ownerId  = new mongoose.Types.ObjectId(req.userId); // ✅ ADD
 
     const newPost = new HousematePost(req.body);
     await newPost.save();

@@ -65,6 +65,8 @@ if (typeof data.furnishType === "string") {
       }
 
       data.userId = new mongoose.Types.ObjectId(req.userId);
+      data.ownerId = new mongoose.Types.ObjectId(req.userId); // ✅ ADD
+
 
       // 🟢 Fix city/locality mapping
       data.city = req.body.city;

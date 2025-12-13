@@ -72,6 +72,7 @@ try {
 
       const data = req.body || {};
       data.userId = userProfile._id;
+      data.ownerId = userProfile._id; 
  
 
       // ✅ Handle floorPlan file upload

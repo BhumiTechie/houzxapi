@@ -71,6 +71,11 @@ additionalDetails: {
   nearestSchool: { type: String },
 
  userId: { type: mongoose.Schema.Types.ObjectId,  ref: 'Profile', required: true },
+ ownerId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Profile',
+  required: true
+},
 }, { timestamps: true });
 
 module.exports = mongoose.model('PostAd', PostAdSchema);
