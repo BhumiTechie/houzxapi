@@ -7,7 +7,7 @@ const Buy = require("../models/Buy");
 const PostAd = require("../models/PostAd");
 const HousematePost = require("../models/HousematePost");
 
-// Helper to format advertiser
+// helper
 const formatAdvertiser = (user) =>
   user
     ? {
@@ -22,50 +22,54 @@ const formatAdvertiser = (user) =>
       }
     : null;
 
-// ✅ GET /myads (BUY + RENT + SHARED for OWNER)
+// ✅ GET MY ADS
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    const userId = new mongoose.Types.ObjectId(req.user.id);
+    const userId = req.userId; // 🔥 FIX
 
-    // 🔹 BUY ADS
-    const buyAds = await Buy.find({
-      $or: [{ userId }, { ownerId: userId }],
-    }).populate("userId ownerId", "firstName lastName profileImage lastActive isOnline email");
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid userId" });
+    }
 
-    // 🔹 RENT ADS
-    const rentAds = await PostAd.find({
-      $or: [{ userId }, { ownerId: userId }],
-    }).populate("userId ownerId", "firstName lastName profileImage lastActive isOnline email");
+    const buyAds = await Buy.find({ userId }).populate(
+      "userId",
+      "firstName lastName profileImage lastActive isOnline email"
+    );
 
-    // 🔹 SHARED ADS
-    const sharedAds = await HousematePost.find({
-      $or: [{ postedBy: userId }, { ownerId: userId }],
-    }).populate("postedBy ownerId", "firstName lastName profileImage lastActive isOnline email");
+    const rentAds = await PostAd.find({ userId }).populate(
+      "userId",
+      "firstName lastName profileImage lastActive isOnline email"
+    );
 
-    // 🔹 Format all ads
-    const allAds = [
-      ...buyAds.map(ad => ({
+    const sharedAds = await HousematePost.find({ postedBy: userId }).populate(
+      "postedBy",
+      "firstName lastName profileImage lastActive isOnline email"
+    );
+
+    const ads = [
+      ...buyAds.map((ad) => ({
         ...ad.toObject(),
+        adType: "BUY",
         advertiser: formatAdvertiser(ad.userId),
       })),
-      ...rentAds.map(ad => ({
+      ...rentAds.map((ad) => ({
         ...ad.toObject(),
+        adType: "RENT",
         advertiser: formatAdvertiser(ad.userId),
       })),
-      ...sharedAds.map(ad => ({
+      ...sharedAds.map((ad) => ({
         ...ad.toObject(),
+        adType: "SHARED",
         advertiser: formatAdvertiser(ad.postedBy),
       })),
     ];
 
-    res.json({ success: true, ads: allAds });
+    res.json({ success: true, ads });
   } catch (err) {
-    console.error("❌ Error fetching my ads:", err);
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-      error: err.message,
-    });
+    console.error("❌ MyAds error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
