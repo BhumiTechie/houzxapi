@@ -27,29 +27,23 @@
 //     return res.status(401).json({ error: "Invalid or expired token" });
 //   }
 // };
-const jwt = require("jsonwebtoken");
+const jwt = require('jsonwebtoken');
 
 module.exports = (req, res, next) => {
   try {
-    const authHeader = req.header("Authorization");
+    const authHeader = req.headers.authorization;
     if (!authHeader) {
-      return res.status(401).json({ error: "No token provided" });
+      return res.status(401).json({ success:false, message:'No token' });
     }
 
-    const token = authHeader.replace("Bearer ", "").trim();
+    const token = authHeader.replace('Bearer ', '');
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    if (!decoded.id) {
-      return res.status(401).json({ error: "Invalid token" });
-    }
-
-    // ✅ IMPORTANT
-    req.userId = decoded.id;
+    req.userId = decoded.id;   // 🔥 IMPORTANT
     req.user = decoded;
 
     next();
   } catch (err) {
-    console.error("Auth error:", err.message);
-    res.status(401).json({ error: "Invalid or expired token" });
+    return res.status(401).json({ success:false, message:'Invalid token' });
   }
 };
