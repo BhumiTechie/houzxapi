@@ -45,7 +45,7 @@ app.use('/tenant', tenantRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // app.use('/upload', uploadRoutes);
-app.use("/", MyAdsRoutes);
+app.use("/myads", MyAdsRoutes);
 
 
 
